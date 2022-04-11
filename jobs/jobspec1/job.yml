@@ -1,0 +1,53 @@
+steps:
+  awesome1:
+    type: query
+    command: select fn_awesomething1($1)
+    matrix:
+      1: "{0..9}"
+  awesome2:
+    type: shell
+    command: /opt/awesome/commands/step2.sql
+    matrix:
+      1: "{0..9}"
+    depends:
+      - awesome1
+  awesome3:
+    type: shell
+    command: /opt/awesome/commands/step2.sh
+    matrix:
+      1: "{0..9}"
+    depends:
+      # awesome2 and awesome3 run in parallel after awesome1
+      - awesome1
+  awesome4:
+    type: shell
+    command: mailx john@example.com
+    depends:
+      # awesome4 runs when awesome 2 and awesome3 are done
+      - awesome2
+      - awesome3
+
+checks:
+  - type: shell
+    command: test -f /data/myexport.sql
+  - type: query
+    command: /opt/awesome/checks/check1.sh
+
+alerts:
+- type: sql
+  command: insert into alerttable values(now(), 'Oh dear')
+- type: shell
+  command: /opt/awesome/alerts/alert2.sh
+
+connections:
+  pg:
+    type: postgresql
+    conn_params:
+      host: localhost
+      port: 5432
+      user: postgres
+
+log:
+- type: file
+  path: /var/log/awesome/awesomerun.log
+parallel: 5
