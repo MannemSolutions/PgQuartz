@@ -19,7 +19,6 @@ import (
 const (
 	envConfName     = "PGQUARTZ_CONFIG"
 	defaultConfFile = "/etc/pgquartz/config.yaml"
-	debugLoglevel   = "debug"
 )
 
 type QuartzConfig struct {
