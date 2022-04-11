@@ -15,6 +15,9 @@ fmt:
 	goimports -w .
 	gci write .
 
+compose:
+	./docker-compose-tests.sh
+
 test: sec lint
 
 sec:

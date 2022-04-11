@@ -1,0 +1,39 @@
+#!/bin/bash
+function print_config() {
+echo "
+# Generic
+PATH=/host/bin:$PATH
+# STKEEPER
+STKEEPER_CLUSTER_NAME=stoloncluster
+STKEEPER_STORE_BACKEND=etcdv3
+STKEEPER_DATA_DIR=/pgdata/data
+STKEEPER_WAL_DIR=/pgwal/wal
+STKEEPER_PG_SU_PASSWORD=supassword
+STKEEPER_PG_REPL_USERNAME=repluser
+STKEEPER_PG_REPL_PASSWORD=replpassword
+STKEEPER_PG_LISTEN_ADDRESS=${MYIP}
+STKEEPER_PG_PORT=5432
+STKEEPER_PG_BIN_PATH=/usr/pgsql-14/bin/
+STKEEPER_UID=${STOLON_UID}
+STKEEPER_PG_SU_AUTH_METHOD=md5
+
+# STPROXY
+STPROXY_CLUSTER_NAME=stoloncluster
+STPROXY_STORE_BACKEND=etcdv3
+STPROXY_PORT=25432
+STPROXY_LISTEN_ADDRESS=${MYIP}
+
+# STSENTINEL
+STSENTINEL_CLUSTER_NAME=stoloncluster
+STSENTINEL_STORE_BACKEND=etcdv3
+
+# STOLONCTL
+STOLONCTL_CLUSTER_NAME=stoloncluster
+STOLONCTL_STORE_BACKEND=etcdv3"
+}
+
+MYIP=$(ip a | grep -oE 'inet ([0-9]{1,3}\.){3}[0-9]{1,3}' | sed -e '/127\.0\.0\.1/d' -e 's/inet //')
+MYHOSTNAME=$(host "${MYIP}" | sed -e 's/.* //' -e 's/\..*//')
+STOLON_UID=$(echo "${MYHOSTNAME}" | tr '-' '_')
+
+print_config
