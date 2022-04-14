@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	//"github.com/mannemsolutions/PgQuartz/pkg/jobrunner"
+	//"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"log"
 
 	"github.com/mannemsolutions/PgQuartz/internal"

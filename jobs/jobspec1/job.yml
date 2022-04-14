@@ -33,6 +33,14 @@ checks:
   - type: query
     command: /opt/awesome/checks/check1.sh
 
+target:
+  # standby, primary, all
+  role: standby
+  # parallel, serial, once
+  distribution: parallel
+  repeat: 8
+  delay: 3600
+
 alerts:
 - type: sql
   command: insert into alerttable values(now(), 'Oh dear')
