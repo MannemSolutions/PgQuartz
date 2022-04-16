@@ -2,6 +2,7 @@ steps:
   awesome1:
     type: query
     command: select fn_awesomething1($1)
+    connection: pg
     matrix:
       1: "{0..9}"
   awesome2:
@@ -58,4 +59,4 @@ connections:
 log:
 - type: file
   path: /var/log/awesome/awesomerun.log
-parallel: 5
+parallel: 2
