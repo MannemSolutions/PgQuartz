@@ -1,28 +1,39 @@
+workdir: "jobs/jobspec1/"
 steps:
   awesome1:
-    type: query
-    command: select fn_awesomething1($1)
-    connection: pg
+    commands:
+    - name: Run step 1.1
+      type: pg
+      inline: select pg_sleep(1)
+    - name: Run step 1.2
+      type: pg
+      inline: select pg_sleep(2)
     matrix:
       1: "{0..9}"
   awesome2:
-    type: shell
-    command: /opt/awesome/commands/step2.sql
+    commands:
+    - name: Run step 2
+      type: pg
+      file: commands/step2.sql
     matrix:
       1: "{0..9}"
     depends:
       - awesome1
   awesome3:
-    type: shell
-    command: /opt/awesome/commands/step2.sh
+    commands:
+    - name: Run step 3
+      type: shell
+      file: commands/step3.sh
     matrix:
       1: "{0..9}"
     depends:
       # awesome2 and awesome3 run in parallel after awesome1
       - awesome1
   awesome4:
-    type: shell
-    command: mailx john@example.com
+    commands:
+    - name: Run step 4
+      type: shell
+      inline: ls
     depends:
       # awesome4 runs when awesome 2 and awesome3 are done
       - awesome2
@@ -30,9 +41,9 @@ steps:
 
 checks:
   - type: shell
-    command: test -f /data/myexport.sql
+    inline: test -f /data/myexport.sql
   - type: query
-    command: /opt/awesome/checks/check1.sh
+    file: /opt/awesome/checks/check1.sh
 
 target:
   # standby, primary, all
@@ -53,8 +64,9 @@ connections:
     type: postgresql
     conn_params:
       host: localhost
-      port: 5432
+      port: 49596
       user: postgres
+      password: supassword
 
 log:
 - type: file

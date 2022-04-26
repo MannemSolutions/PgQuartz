@@ -1,9 +1,8 @@
 package main
 
 import (
-	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
-
 	"github.com/mannemsolutions/PgQuartz/internal"
+	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 )
 
 func main() {
@@ -12,6 +11,8 @@ func main() {
 		log.Fatal(err)
 	} else {
 		h := jobs.NewHandler(config)
-		h.Run()
+		h.VerifyConfig()
+		h.RunSteps()
+		h.RunChecks()
 	}
 }

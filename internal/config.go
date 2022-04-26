@@ -3,11 +3,11 @@ package internal
 import (
 	"flag"
 	"fmt"
-	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"gopkg.in/yaml.v2"
 )
 

@@ -80,7 +80,7 @@ func (c *Conn) Connect() (err error) {
 	return nil
 }
 
-func (c *Conn) runQueryExists(query string, args ...interface{}) (exists bool, err error) {
+func (c *Conn) CheckExists(query string, args ...interface{}) (exists bool, err error) {
 	err = c.Connect()
 	if err != nil {
 		return false, err
@@ -96,7 +96,7 @@ func (c *Conn) runQueryExists(query string, args ...interface{}) (exists bool, e
 	return false, err
 }
 
-func (c *Conn) runQueryExec(query string, args ...interface{}) (err error) {
+func (c *Conn) Exec(query string, args ...interface{}) (err error) {
 	err = c.Connect()
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (c *Conn) runQueryExec(query string, args ...interface{}) (err error) {
 	return err
 }
 
-func (c *Conn) runQueryGetOneField(query string, args ...interface{}) (answer string, err error) {
+func (c *Conn) GetOneField(query string, args ...interface{}) (answer string, err error) {
 	err = c.Connect()
 	if err != nil {
 		return "", err

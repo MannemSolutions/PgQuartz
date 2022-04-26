@@ -5,7 +5,7 @@ build:
 
 debug:
 	go build -gcflags "all=-N -l" ./cmd/pgquartz
-	~/go/bin/dlv --headless --listen=:2345 --api-version=2 --accept-multiclient exec ./pgquartz -- -c ./config.yaml
+	~/go/bin/dlv --headless --listen=:2345 --api-version=2 --accept-multiclient exec ./pgquartz -- -c jobs/jobspec1/job.yml
 
 run:
 	./pgquartz -c jobs/jobspec1/job.yml

@@ -1,20 +1,18 @@
 package jobs
 
-import "time"
-
 type Runners []*Runner
 
 type Runner struct {
 	index  int
 	config Config
-	Steps Steps
+	Steps  Steps
 	parent *Handler
-	done bool
+	done   bool
 }
 
 func (rs Runners) Done() bool {
 	for _, r := range rs {
-		if ! r.done {
+		if !r.done {
 			return false
 		}
 	}
@@ -23,22 +21,22 @@ func (rs Runners) Done() bool {
 
 func NewRunner(h *Handler, index int) *Runner {
 	return &Runner{
-		index: index,
+		index:  index,
 		parent: h,
 		config: h.config,
 	}
 }
 
-func (r *Runner) Run () {
-	// !!!! Locking !!!!!
+func (r *Runner) Run() {
 	for {
-		if stepName, ok := <-r.parent.toDo; ! ok {
+		if stepName, ok := <-r.parent.toDo; !ok {
 			break
 		} else if step, exists := r.parent.config.Steps[stepName]; !exists {
 			log.Panicf("Runner %d: Trying to run a step %s that does not exist?", r.index, stepName)
 		} else {
-			log.Infof("Runner %d: Running the following command: %s", r.index, step.Command)
-			time.Sleep(3 * time.Second)
+			if err := step.Commands.Run(r.config.Conns); err != nil {
+				log.Errorf("error occurred while running step %s: %e", stepName, err)
+			}
 			r.parent.done <- stepName
 		}
 	}

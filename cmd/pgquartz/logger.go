@@ -1,10 +1,12 @@
 package main
 
 import (
+	"os"
+
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
+	"github.com/mannemsolutions/PgQuartz/pkg/pg"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 var (
@@ -23,4 +25,5 @@ func initLogger() {
 		atom,
 	)).Sugar()
 	jobs.InitLogger(log)
+	pg.Initialize(log)
 }

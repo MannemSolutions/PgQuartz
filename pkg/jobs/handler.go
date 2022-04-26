@@ -1,32 +1,41 @@
 package jobs
 
+import "os"
+
 type Handler struct {
-	config Config
-	steps Steps
+	config  Config
+	steps   Steps
 	runners Runners
-	work []string
-	toDo chan string
-	done chan string
+	work    []string
+	toDo    chan string
+	done    chan string
 }
 
 func NewHandler(c Config) Handler {
 	return Handler{
 		config: c,
-		steps: c.Steps.Clone(),
-		toDo: make(chan string, len(c.Steps)),
-		done: make(chan string, len(c.Steps)),
+		steps:  c.Steps.Clone(),
+		toDo:   make(chan string, len(c.Steps)),
+		done:   make(chan string, len(c.Steps)),
 	}
 }
 
-func (h *Handler) Run() {
-	log.Info("This is my config:", h.config.String())
+func (h *Handler) VerifyConfig() {
+	log.Info("This is my config:\n", h.config.String())
+	if h.config.Workdir != "" {
+		log.Infof("Jumping to workdir %s", h.config.Workdir)
+		os.Chdir(h.config.Workdir)
+	}
 	log.Info("Verifying config")
 	h.config.Verify()
+}
+
+func (h *Handler) RunSteps() {
 	log.Info("Initializing runners")
 	h.initRunners()
 	log.Info("Waiting for all work to be scheduled")
 	for {
-		if ! h.newWork() {
+		if !h.newWork() {
 			break
 		}
 		select {
@@ -49,6 +58,16 @@ func (h *Handler) Run() {
 	h.processDone()
 	log.Info("All work is done")
 	log.Sync()
+}
+
+func (h *Handler) RunChecks() {
+	if len(h.config.Checks) == 0 {
+		return
+	}
+	log.Info("Checking results for these jobs")
+	if err := h.config.Checks.Run(h.config.Conns); err != nil {
+		log.Errorf("error occurred while running checks: %e", err)
+	}
 }
 
 func (h *Handler) initRunners() {
@@ -82,4 +101,3 @@ func (h *Handler) processDone() {
 func (h *Handler) checkAllDone() (done bool) {
 	return h.runners.Done()
 }
-
