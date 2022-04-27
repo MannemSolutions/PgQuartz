@@ -1,11 +1,14 @@
 package jobs
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -45,7 +48,12 @@ type Command struct {
 	Inline string `yaml:"inline"`
 	// Home (~) is not resolved
 	File    string            `yaml:"file"`
-	Result  string            `yaml:"result"`
+	StdOut string
+	StdOutLines []string
+	StdErr string
+	StdErrLines []string
+	Test  string            `yaml:"test"`
+	When  string            `yaml:"when"`
 	Matrix  map[string]string `yaml:"matrix"`
 	tmpFile *os.File
 }
@@ -146,15 +154,29 @@ func (c Command) Run(conns Connections) (err error) {
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand()
 	}
-	return conns.Execute(c.Type, c.ScriptBody(), c.Result)
+	if c.StdOutLines, err = conns.Execute(c.Type, c.ScriptBody()); err != nil {
+		return err
+	}
+	c.StdOut = strings.Join(c.StdOutLines, "\n")
+	return nil
 }
 
 func (c Command) RunOsCommand() (err error) {
 	exCommand := exec.Command("/bin/bash", c.ScriptFile())
-	exCommand.Stdout = os.Stdout
+	var stdOut, stdErr bytes.Buffer
+	exCommand.Stdout = io.MultiWriter(&stdOut)
+	exCommand.Stderr = io.MultiWriter(&stdErr)
 	if err = exCommand.Run(); err != nil {
 		return err
 	}
+	c.StdOut = stdOut.String()
+	c.StdOutLines = strings.Split(c.StdOut, "\n")
+	c.StdErr = stdErr.String()
+	c.StdErrLines = strings.Split(c.StdErr, "\n")
 	log.Infof("command %s successfully executed", c.Name)
 	return nil
+}
+
+func (c Command) test() () {
+
 }

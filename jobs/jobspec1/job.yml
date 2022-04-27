@@ -64,7 +64,7 @@ connections:
     type: postgresql
     conn_params:
       host: localhost
-      port: 49596
+      port: 49568
       user: postgres
       password: supassword
 
