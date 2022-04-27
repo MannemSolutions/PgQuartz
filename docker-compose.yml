@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  pgquartz:
+    build: ./docker/pgquartz
+    environment:
+      CLUSTER_SIZE: 3
+    ports:
+    - "25432"
+    - "5432"
+    - "2345"
+    volumes:
+    - ./:/host
