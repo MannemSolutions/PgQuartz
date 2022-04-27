@@ -47,15 +47,15 @@ type Command struct {
 	Type   string `yaml:"type"`
 	Inline string `yaml:"inline"`
 	// Home (~) is not resolved
-	File    string            `yaml:"file"`
-	StdOut string
+	File        string `yaml:"file"`
+	StdOut      string
 	StdOutLines []string
-	StdErr string
+	StdErr      string
 	StdErrLines []string
-	Test  string            `yaml:"test"`
-	When  string            `yaml:"when"`
-	Matrix  map[string]string `yaml:"matrix"`
-	tmpFile *os.File
+	Test        string            `yaml:"test"`
+	When        string            `yaml:"when"`
+	Matrix      map[string]string `yaml:"matrix"`
+	tmpFile     *os.File
 }
 
 func (c Command) VerifyScriptFile() (err error) {
@@ -177,6 +177,6 @@ func (c Command) RunOsCommand() (err error) {
 	return nil
 }
 
-func (c Command) test() () {
+func (c Command) test() {
 
 }

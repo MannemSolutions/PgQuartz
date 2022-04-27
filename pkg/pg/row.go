@@ -5,7 +5,7 @@ import "strings"
 type Row []string
 type Result struct {
 	header Row
-	rows []Row
+	rows   []Row
 }
 
 func (r Result) AsMapArray() (arraysOfMaps []map[string]string) {

@@ -136,7 +136,7 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 			if cols, err = cursor.Values(); err != nil {
 				return answer, err
 			} else {
-				for _,col := range cols {
+				for _, col := range cols {
 					row = append(row, fmt.Sprint(col))
 				}
 			}
