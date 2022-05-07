@@ -168,7 +168,7 @@ func (c Command) ScriptBody() (scriptBody string) {
 }
 
 func (c *Command) Run(conns Connections) (err error) {
-	log.Infof("Running the following command: %s", c.Name)
+	log.Debugf("Running the following command: %s", c.Name)
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand()
 	}
@@ -195,6 +195,6 @@ func (c *Command) RunOsCommand() (err error) {
 	}
 	c.stdOut = NewResultFromString(stdOut.String())
 	c.stdErr = NewResultFromString(stdErr.String())
-	log.Infof("command %s successfully executed", c.Name)
+	log.Debugf("command %s successfully executed", c.Name)
 	return nil
 }

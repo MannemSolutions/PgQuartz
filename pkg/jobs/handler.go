@@ -40,19 +40,13 @@ func (h *Handler) RunSteps() {
 		if !h.newWork() {
 			break
 		}
-		select {
-		case doneStep := <-h.Done:
-			log.Infof("This step is done: %s", doneStep)
-			h.Steps.setStepState(doneStep, stepStateDone)
-		default:
-			//log.Infof("break")
-		}
+		h.processDone()
 	}
 	close(h.ToDo)
 	log.Info("Waiting for all work to be done")
 	for {
 		if h.checkAllDone() {
-			log.Info("break")
+			log.Debug("RunSteps: break")
 			break
 		}
 	}
@@ -65,7 +59,7 @@ func (h *Handler) RunChecks() {
 	if len(h.Config.Checks) == 0 {
 		return
 	}
-	log.Info("Checking results for these jobs")
+	log.Debug("Checking job results")
 	if err := h.Config.Checks.Run(h.Config.Conns); err != nil {
 		log.Errorf("error occurred while running checks: %e", err)
 	}
@@ -100,7 +94,7 @@ func (h *Handler) processDone() {
 	select {
 	case doneStep := <-h.Done:
 		if doneStep != "" {
-			log.Infof("This step is done: %s", doneStep)
+			log.Debugf("This step is done: %s", doneStep)
 			h.Steps.setStepState(doneStep, stepStateDone)
 		}
 	default:

@@ -40,6 +40,6 @@ func (r *Runner) Run() {
 			r.parent.Done <- stepName
 		}
 	}
-	log.Infof("Runner %d: Done", r.index)
+	log.Debugf("Runner %d: Done", r.index)
 	r.done = true
 }

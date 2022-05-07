@@ -137,7 +137,7 @@ func (ss Steps) CheckWhen(all Handler, stepName string) (bool, error) {
 			}
 		}
 	}
-	log.Infof("All %d WhenChecks for step %s are OK", numChecks, stepName)
+	log.Debugf("All %d WhenChecks for step %s are OK", numChecks, stepName)
 	return true, nil
 }
 

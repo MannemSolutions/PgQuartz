@@ -27,3 +27,10 @@ func initLogger() {
 	jobs.InitLogger(log)
 	pg.Initialize(log)
 }
+
+func enableDebug(debug bool) {
+	if debug {
+		atom.SetLevel(zap.DebugLevel)
+	}
+	log.Debug("Debug logging enabled by config")
+}

@@ -1,3 +1,4 @@
+debug: true
 workdir: "jobs/jobspec1/"
 steps:
   awesome1:
@@ -76,3 +77,4 @@ log:
 - type: file
   path: /var/log/awesome/awesomerun.log
 parallel: 2
+
