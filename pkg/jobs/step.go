@@ -114,15 +114,15 @@ func (ss Steps) NumWaiting() (numWaiting int) {
 
 func (ss Steps) CheckWhen(all Handler, stepName string) (bool, error) {
 	var numChecks int
-	if step, exists := ss[stepName]; ! exists {
+	if step, exists := ss[stepName]; !exists {
 		return false, fmt.Errorf("checking a 'when' on an undefined step %s", stepName)
 	} else {
 		numChecks = len(step.When)
 		for _, whenCheck := range step.When {
-			if ! strings.Contains(whenCheck, "{{") || ! strings.Contains(whenCheck, "}}") {
+			if !strings.Contains(whenCheck, "{{") || !strings.Contains(whenCheck, "}}") {
 				whenCheck = fmt.Sprintf("{{if %s }}True{{end}}", whenCheck)
 			}
-			if t, err := template.New("when").Parse(whenCheck); err !=  nil {
+			if t, err := template.New("when").Parse(whenCheck); err != nil {
 				return false, err
 			} else {
 				log.Debugf("Processing WhenCheck '%s' for step %s", whenCheck, stepName)

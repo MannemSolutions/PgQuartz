@@ -67,13 +67,13 @@ type Command struct {
 	Type   string `yaml:"type"`
 	Inline string `yaml:"inline,omitempty"`
 	// Home (~) is not resolved
-	File        string `yaml:"file,omitempty"`
-	stdOut Result `yaml:"-"`
-	stdErr Result `yaml:"-"`
-	Rc          int `yaml:"-"`
-	Test        string            `yaml:"test,omitempty"`
-	Matrix      map[string]string `yaml:"matrix,omitempty"`
-	tmpFile     *os.File
+	File    string            `yaml:"file,omitempty"`
+	stdOut  Result            `yaml:"-"`
+	stdErr  Result            `yaml:"-"`
+	Rc      int               `yaml:"-"`
+	Test    string            `yaml:"test,omitempty"`
+	Matrix  map[string]string `yaml:"matrix,omitempty"`
+	tmpFile *os.File
 }
 
 func (c Command) VerifyScriptFile() (err error) {
