@@ -1,3 +1,4 @@
+debug: true
 workdir: "jobs/jobspec1/"
 steps:
   awesome1:
@@ -19,6 +20,8 @@ steps:
       1: "{0..9}"
     depends:
       - awesome1
+    when:
+      - "eq .Steps.awesome1.Rc 0"
   awesome3:
     commands:
     - name: Run step 3
@@ -38,6 +41,8 @@ steps:
       # awesome4 runs when awesome 2 and awesome3 are done
       - awesome2
       - awesome3
+    when:
+      - '.Steps.awesome3.Commands.StdOut.Contains "Mijn PID"'
 
 checks:
   - type: shell
@@ -64,7 +69,7 @@ connections:
     type: postgresql
     conn_params:
       host: localhost
-      port: 49596
+      port: 49568
       user: postgres
       password: supassword
 
@@ -72,3 +77,4 @@ log:
 - type: file
   path: /var/log/awesome/awesomerun.log
 parallel: 2
+

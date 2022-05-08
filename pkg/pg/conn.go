@@ -117,3 +117,31 @@ func (c *Conn) GetOneField(query string, args ...interface{}) (answer string, er
 	}
 	return answer, nil
 }
+
+func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err error) {
+	err = c.Connect()
+	if err != nil {
+		return answer, err
+	}
+	var cursor pgx.Rows
+	if cursor, err = c.conn.Query(context.Background(), query, args...); err != nil {
+		return answer, err
+	} else {
+		for _, header := range cursor.FieldDescriptions() {
+			answer.header = append(answer.header, string(header.Name))
+		}
+		for cursor.Next() {
+			var row []string
+			var cols []interface{}
+			if cols, err = cursor.Values(); err != nil {
+				return answer, err
+			} else {
+				for _, col := range cols {
+					row = append(row, fmt.Sprint(col))
+				}
+			}
+			answer.rows = append(answer.rows, row)
+		}
+	}
+	return answer, nil
+}

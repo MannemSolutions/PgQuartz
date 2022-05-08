@@ -10,6 +10,7 @@ func main() {
 	if config, err := internal.NewConfig(); err != nil {
 		log.Fatal(err)
 	} else {
+		enableDebug(config.Debug)
 		h := jobs.NewHandler(config)
 		h.VerifyConfig()
 		h.RunSteps()

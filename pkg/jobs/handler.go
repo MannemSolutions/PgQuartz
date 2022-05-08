@@ -3,31 +3,33 @@ package jobs
 import "os"
 
 type Handler struct {
-	config  Config
-	steps   Steps
-	runners Runners
-	work    []string
-	toDo    chan string
-	done    chan string
+	Config  Config
+	Steps   Steps
+	Runners Runners
+	Work    []string
+	ToDo    chan string
+	Done    chan string
 }
 
 func NewHandler(c Config) Handler {
 	return Handler{
-		config: c,
-		steps:  c.Steps.Clone(),
-		toDo:   make(chan string, len(c.Steps)),
-		done:   make(chan string, len(c.Steps)),
+		Config: c,
+		Steps:  c.Steps.Clone(),
+		ToDo:   make(chan string, len(c.Steps)),
+		Done:   make(chan string, len(c.Steps)),
 	}
 }
 
 func (h *Handler) VerifyConfig() {
-	log.Info("This is my config:\n", h.config.String())
-	if h.config.Workdir != "" {
-		log.Infof("Jumping to workdir %s", h.config.Workdir)
-		os.Chdir(h.config.Workdir)
+	log.Info("This is my config:\n", h.Config.String())
+	if h.Config.Workdir != "" {
+		log.Infof("Jumping to workdir %s", h.Config.Workdir)
+		if err := os.Chdir(h.Config.Workdir); err != nil {
+			log.Panicf("could not jump to dir %s", h.Config.Workdir)
+		}
 	}
 	log.Info("Verifying config")
-	h.config.Verify()
+	h.Config.Verify()
 }
 
 func (h *Handler) RunSteps() {
@@ -38,66 +40,68 @@ func (h *Handler) RunSteps() {
 		if !h.newWork() {
 			break
 		}
-		select {
-		case doneStep := <-h.done:
-			log.Infof("This step is done: %s", doneStep)
-			h.steps.setStepState(doneStep, stepStateDone)
-		default:
-			//log.Infof("break")
-		}
+		h.processDone()
 	}
-	close(h.toDo)
+	close(h.ToDo)
 	log.Info("Waiting for all work to be done")
 	for {
 		if h.checkAllDone() {
-			log.Info("break")
+			log.Debug("RunSteps: break")
 			break
 		}
 	}
-	close(h.done)
+	close(h.Done)
 	h.processDone()
 	log.Info("All work is done")
-	log.Sync()
 }
 
 func (h *Handler) RunChecks() {
-	if len(h.config.Checks) == 0 {
+	if len(h.Config.Checks) == 0 {
 		return
 	}
-	log.Info("Checking results for these jobs")
-	if err := h.config.Checks.Run(h.config.Conns); err != nil {
+	log.Debug("Checking job results")
+	if err := h.Config.Checks.Run(h.Config.Conns); err != nil {
 		log.Errorf("error occurred while running checks: %e", err)
 	}
 }
 
 func (h *Handler) initRunners() {
-	for i := 0; i < h.config.Parallel; i++ {
+	for i := 0; i < h.Config.Parallel; i++ {
 		r := NewRunner(h, i)
-		h.runners = append(h.runners, r)
+		h.Runners = append(h.Runners, r)
 		go r.Run()
 	}
 }
 
 func (h *Handler) newWork() (done bool) {
 	done = true
-	for _, name := range h.steps.GetReadySteps() {
+	for _, name := range h.Steps.GetReadySteps() {
 		log.Infof("scheduling step %s", name)
-		h.toDo <- name
-		h.steps[name].state = stepStateScheduled
+		if result, err := h.Steps.CheckWhen(*h, name); err != nil {
+			log.Errorf("error while checking step %s: %e", name, err)
+			h.Steps.setStepState(name, stepStateSkipped)
+		} else if result {
+			h.ToDo <- name
+			h.Steps.setStepState(name, stepStateScheduled)
+		} else {
+			h.Steps.setStepState(name, stepStateDone)
+		}
 	}
-	return h.steps.NumWaiting() > 0
+	return h.Steps.NumWaiting() > 0
 }
 
 func (h *Handler) processDone() {
 	select {
-	case doneStep := <-h.done:
-		log.Infof("This step is done: %s", doneStep)
-		h.steps.setStepState(doneStep, stepStateDone)
+	case doneStep := <-h.Done:
+		if doneStep != "" {
+			log.Debugf("This step is done: %s", doneStep)
+			h.Steps.setStepState(doneStep, stepStateDone)
+		}
 	default:
 		//log.Infof("break")
 	}
 }
 
 func (h *Handler) checkAllDone() (done bool) {
-	return h.runners.Done()
+	return h.Runners.Done()
 }

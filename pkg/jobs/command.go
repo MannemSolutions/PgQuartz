@@ -1,7 +1,9 @@
 package jobs
 
 import (
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -39,14 +41,38 @@ func (cs Commands) Clone() (clone Commands) {
 	return clone
 }
 
+func (cs Commands) Rc() (rc int) {
+	for _, command := range cs {
+		rc += command.Rc
+	}
+	return rc
+}
+
+func (cs Commands) StdOut() (stdOut Result) {
+	for _, command := range cs {
+		stdOut = append(stdOut, command.stdOut...)
+	}
+	return stdOut
+}
+
+func (cs Commands) StdErr() (stdErr Result) {
+	for _, command := range cs {
+		stdErr = append(stdErr, command.stdErr...)
+	}
+	return stdErr
+}
+
 type Command struct {
 	Name   string `yaml:"name"`
 	Type   string `yaml:"type"`
-	Inline string `yaml:"inline"`
+	Inline string `yaml:"inline,omitempty"`
 	// Home (~) is not resolved
-	File    string            `yaml:"file"`
-	Result  string            `yaml:"result"`
-	Matrix  map[string]string `yaml:"matrix"`
+	File    string            `yaml:"file,omitempty"`
+	stdOut  Result            `yaml:"-"`
+	stdErr  Result            `yaml:"-"`
+	Rc      int               `yaml:"-"`
+	Test    string            `yaml:"test,omitempty"`
+	Matrix  map[string]string `yaml:"matrix,omitempty"`
 	tmpFile *os.File
 }
 
@@ -141,20 +167,34 @@ func (c Command) ScriptBody() (scriptBody string) {
 	return string(scriptBodyBytes)
 }
 
-func (c Command) Run(conns Connections) (err error) {
-	log.Infof("Running the following command: %s", c.Name)
+func (c *Command) Run(conns Connections) (err error) {
+	log.Debugf("Running the following command: %s", c.Name)
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand()
 	}
-	return conns.Execute(c.Type, c.ScriptBody(), c.Result)
-}
-
-func (c Command) RunOsCommand() (err error) {
-	exCommand := exec.Command("/bin/bash", c.ScriptFile())
-	exCommand.Stdout = os.Stdout
-	if err = exCommand.Run(); err != nil {
+	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody()); err != nil {
+		c.Rc = 1
 		return err
 	}
-	log.Infof("command %s successfully executed", c.Name)
+	return nil
+}
+
+func (c *Command) RunOsCommand() (err error) {
+	exCommand := exec.Command("/bin/bash", c.ScriptFile())
+	var stdOut, stdErr bytes.Buffer
+	exCommand.Stdout = io.MultiWriter(&stdOut)
+	exCommand.Stderr = io.MultiWriter(&stdErr)
+	if err = exCommand.Run(); err != nil {
+		switch typedErr := err.(type) {
+		case *exec.ExitError:
+			c.Rc = typedErr.ExitCode()
+		default:
+			c.Rc = 1
+		}
+		return err
+	}
+	c.stdOut = NewResultFromString(stdOut.String())
+	c.stdErr = NewResultFromString(stdErr.String())
+	log.Debugf("command %s successfully executed", c.Name)
 	return nil
 }
