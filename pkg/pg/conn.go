@@ -13,6 +13,7 @@ import (
 type Conn struct {
 	Type       string `yaml:"type"`
 	ConnParams Dsn    `yaml:"conn_params"`
+	Role       string `yaml:"role"`
 	conn       *pgx.Conn
 }
 
@@ -76,6 +77,11 @@ func (c *Conn) Connect() (err error) {
 	if err != nil {
 		c.conn = nil
 		return err
+	}
+	if ok, err := c.VerifyRole(); err != nil {
+		return err
+	} else if ! ok {
+		return fmt.Errorf("we are connected to a database with another role then wished for")
 	}
 	return nil
 }
@@ -144,4 +150,18 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 		}
 	}
 	return answer, nil
+}
+
+func (c *Conn) VerifyRole() (ok bool, err error) {
+	if _, ok := ValidRoles[c.Role]; ! ok {
+		return false, fmt.Errorf("invalid role was specified for conn %s", c.ConnParams.String(true))
+	}
+	if role, err := c.GetOneField("select case pg_is_in_recovery() when true then 'standby' else 'primary' end"); err != nil {
+		return false, err
+	} else if role != c.Role {
+		log.Debugf("actual role %s != expected role %s", role, c.Role)
+		return false, nil
+	}
+	log.Debugf("actual role is as expected %s", c.Role)
+	return true, nil
 }

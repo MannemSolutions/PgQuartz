@@ -30,6 +30,26 @@ func (h *Handler) VerifyConfig() {
 	}
 	log.Info("Verifying config")
 	h.Config.Verify()
+	//if ! h.VerifyRoles() {
+	//	log.Panicf("one or more connections are to an instance with different role")
+	//}
+}
+
+func (h Handler) VerifyRoles() bool {
+	for name, con := range h.Config.Conns {
+		if ok, err := con.VerifyRole(); err != nil {
+			log.Errorf("Error while verifying %s: %e", name, err)
+			return false
+		} else {
+			if ok {
+				log.Debugf("connection %s has expected role", name)
+			} else {
+				log.Debugf("connection %s has different role", name)
+				return false
+			}
+		}
+	}
+	return true
 }
 
 func (h *Handler) RunSteps() {

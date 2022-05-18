@@ -51,8 +51,6 @@ checks:
     file: /opt/awesome/checks/check1.sh
 
 target:
-  # standby, primary, all
-  role: standby
   # parallel, serial, once
   distribution: parallel
   repeat: 8
@@ -67,9 +65,11 @@ alerts:
 connections:
   pg:
     type: postgresql
+    # standby, primary, all
+    role: primary
     conn_params:
       host: localhost
-      port: 49568
+      port: 61515
       user: postgres
       password: supassword
 
