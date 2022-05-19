@@ -46,3 +46,7 @@ func (c Config) Verify() {
 		log.Panicf("config issue(s) prevent me from continuing")
 	}
 }
+
+func (c *Config) Initialize() {
+	c.Steps.Initialize()
+}

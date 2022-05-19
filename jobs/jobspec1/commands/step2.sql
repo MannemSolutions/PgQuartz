@@ -1,1 +1,1 @@
-select pg_sleep(3)
+select pg_sleep(:delay)

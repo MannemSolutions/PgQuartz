@@ -11,6 +11,7 @@ func main() {
 		log.Fatal(err)
 	} else {
 		enableDebug(config.Debug)
+		config.Initialize()
 		h := jobs.NewHandler(config)
 		h.VerifyConfig()
 		h.RunSteps()

@@ -53,10 +53,30 @@ func (ss Steps) Verify(conns Connections) (errs []error) {
 	return errs
 }
 
+func (ss *Steps) Initialize() {
+	for _, step := range *ss {
+		step.SetInstances()
+	}
+}
+
+func (ss Steps) GetNumInstances() int {
+	var count int
+	for name, step := range ss {
+		step.SetInstances()
+		num := len(step.GetInstances())
+		log.Debugf("step %s has %d instances", name, num)
+		count += num
+	}
+	log.Debugf("counting %d instances")
+	return count
+}
+
 func (ss Steps) Clone() Steps {
 	clone := make(Steps)
 	for name, step := range ss {
-		clone[name] = step.Clone()
+		newStep := step.Clone()
+		newStep.SetInstances()
+		clone[name] = newStep
 	}
 	return clone
 }
@@ -83,7 +103,10 @@ func (ss Steps) setStepState(stepName string, newState stepState) {
 func (ss Steps) GetReadySteps() (ready []string) {
 	var isReady bool
 	for stepName, step := range ss {
-		if step.state != stepStateWaiting {
+		if step.Ready() {
+			ready = append(ready, stepName)
+		}
+		if !step.Waiting() {
 			continue
 		}
 		isReady = true
@@ -104,7 +127,7 @@ func (ss Steps) GetReadySteps() (ready []string) {
 
 func (ss Steps) NumWaiting() (numWaiting int) {
 	for _, step := range ss {
-		if step.state != stepStateWaiting {
+		if !step.Waiting() {
 			continue
 		}
 		numWaiting += 1
@@ -142,12 +165,49 @@ func (ss Steps) CheckWhen(all Handler, stepName string) (bool, error) {
 }
 
 type Step struct {
-	Commands Commands `yaml:"commands"`
-	Depends  []string `yaml:"depends,omitempty"`
-	state    stepState
-	When     []string `yaml:"when,omitempty"`
-	stdOut   Result   `yaml:"-"`
-	stdErr   Result   `yaml:"-"`
+	Commands  Commands `yaml:"commands"`
+	Depends   []string `yaml:"depends,omitempty"`
+	state     stepState
+	When      []string   `yaml:"when,omitempty"`
+	stdOut    Result     `yaml:"-"`
+	stdErr    Result     `yaml:"-"`
+	Matrix    MatrixArgs `yaml:"matrix,omitempty"`
+	instances Instances
+	done      int
+}
+
+func (s Step) Waiting() bool {
+	return s.state == stepStateWaiting
+}
+
+func (s Step) Ready() bool {
+	return s.state == stepStateReady
+}
+
+func (s *Step) Done() bool {
+	if s.state == stepStateDone {
+		return true
+	}
+	if s.done >= len(s.instances) {
+		if err := s.setState(stepStateDone); err != nil {
+			log.Panicf("Could not issue done state for step %e", err)
+		}
+		return true
+	}
+	return false
+}
+
+func (s *Step) GetInstanceArgs(instance int) InstanceArguments {
+	return s.instances[instance]
+}
+
+func (s *Step) InstanceFinished(instance int) bool {
+	if s.done > len(s.instances) {
+		log.Fatalf("calling instanceFinished on a step that is already finished")
+	}
+	log.Debugf("instance done: %s", s.instances[instance].String())
+	s.done += 1
+	return s.Done()
 }
 
 func (s *Step) setState(newState stepState) error {
@@ -165,6 +225,7 @@ func (s Step) Clone() *Step {
 		Depends:  s.Depends,
 		state:    stepStateWaiting,
 		When:     s.When,
+		Matrix:   s.Matrix,
 	}
 }
 
@@ -184,4 +245,15 @@ func (s Step) StdErr() Result {
 
 func (s Step) Rc() int {
 	return s.Commands.Rc()
+}
+
+func (s *Step) SetInstances() {
+	if len(s.instances) == 0 {
+		s.instances = s.Matrix.Instances()
+	}
+}
+
+func (s Step) GetInstances() Instances {
+	//log.Debugf("instances: %s", s.instances.String())
+	return s.instances
 }

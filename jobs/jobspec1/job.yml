@@ -5,19 +5,21 @@ steps:
     commands:
     - name: Run step 1.1
       type: pg
-      inline: select pg_sleep(1)
+      inline: select pg_sleep(:delay)
     - name: Run step 1.2
       type: pg
-      inline: select pg_sleep(2)
+      inline: insert into t1 values(:delay, :desc)
     matrix:
-      1: "{0..9}"
+      delay: ["1", "2", "3"]
+      desc: ["A", "B", "C"]
   awesome2:
     commands:
     - name: Run step 2
       type: pg
       file: commands/step2.sql
     matrix:
-      1: "{0..9}"
+      delay: ["1", "2", "3"]
+      desc: ["A", "B", "C"]
     depends:
       - awesome1
     when:
@@ -28,7 +30,8 @@ steps:
       type: shell
       file: commands/step3.sh
     matrix:
-      1: "{0..9}"
+      delay: ["1", "2", "3"]
+      desc: ["A", "B", "C"]
     depends:
       # awesome2 and awesome3 run in parallel after awesome1
       - awesome1
