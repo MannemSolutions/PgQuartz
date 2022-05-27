@@ -1,8 +1,9 @@
 #!/bin/bash
 set -e
 
-docker-compose down && docker rmi pgquartz_pgquartz || echo new install
-docker-compose up -d --scale pgquartz=3
+docker-compose down --remove-orphans #&& docker rmi pgquartz_builder pgquartz_stolon || echo new or partial install
+docker-compose up -d --scale stolon=3
+docker exec -ti pgquartz_builder_1 /bin/bash -ic 'cd /host && make build_dlv build_pgquartz'
 
 #for ((i=1;i<=3;i++)); do
 #  echo "stolondebug_stolon_${i}"

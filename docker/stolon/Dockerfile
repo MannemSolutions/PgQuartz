@@ -1,21 +1,12 @@
-FROM centos:8
+FROM rockylinux:8
 
 ENV ETCD_VER=v3.5.2
 ENV ETCD_DOWNLOAD_URL=https://github.com/etcd-io/etcd/releases/download
 ENV STOLON_VER=v0.17.0
 ENV STOLON_DOWNLOAD_URL=https://github.com/sorintlab/stolon/releases/download
 
-# See https://techglimpse.com/failed-metadata-repo-appstream-centos-8/ for more info
-RUN sed -i 's/mirrorlist/#mirrorlist/g' /etc/yum.repos.d/CentOS-* && \
-    sed -i 's|#baseurl=http://mirror.centos.org|baseurl=http://vault.centos.org|g' /etc/yum.repos.d/CentOS-* && \
-    yum update -y && \
-    yum install -y bind-utils make git
-
-# Install GoLang
-RUN cd $(mktemp -d) && \
-    curl -L https://go.dev/dl/go1.17.7.linux-amd64.tar.gz -o go1.17.7.linux-amd64.tar.gz && \
-    rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.7.linux-amd64.tar.gz && \
-    echo 'export PATH=$PATH:/usr/local/go/bin' >> /etc/bashrc
+RUN yum update -y && \
+    yum install -y bind-utils make git iproute
 
 # Install etcd
 RUN cd $(mktemp -d) && \
