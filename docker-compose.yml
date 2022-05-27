@@ -1,7 +1,11 @@
 version: '3.9'
 services:
-  pgquartz:
-    build: ./docker/pgquartz
+  builder:
+    build: ./docker/builder
+    volumes:
+    - ./:/host
+  stolon:
+    build: ./docker/stolon
     environment:
       CLUSTER_SIZE: 3
     ports:
