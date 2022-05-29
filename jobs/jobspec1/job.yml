@@ -1,5 +1,5 @@
 debug: true
-workdir: "jobs/jobspec1/"
+workdir: "/host/jobs/jobspec1/"
 steps:
   awesome1:
     commands:
@@ -68,8 +68,8 @@ connections:
     # standby, primary, all
     role: primary
     conn_params:
-      host: localhost
-      port: 61515
+      host: /tmp
+      port: 5432
       user: postgres
       password: supassword
 
