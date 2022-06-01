@@ -80,4 +80,9 @@ log:
 - type: file
   path: /var/log/awesome/awesomerun.log
 parallel: 2
-
+timeout: 1h
+etcdConfig:
+  endpoints:
+    - localhost:2379
+  lockKey: awesome
+  lockTimeout: 10s

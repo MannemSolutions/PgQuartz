@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"os"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
@@ -25,7 +26,8 @@ func initLogger() {
 		atom,
 	)).Sugar()
 	jobs.InitLogger(log)
-	pg.Initialize(log)
+	pg.InitLogger(log)
+	etcd.InitLogger(log)
 }
 
 func enableDebug(debug bool) {

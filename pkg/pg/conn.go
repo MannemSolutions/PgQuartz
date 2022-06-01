@@ -1,7 +1,6 @@
 package pg
 
 import (
-	"context"
 	"fmt"
 	"os"
 	"os/user"
@@ -73,14 +72,14 @@ func (c *Conn) Connect() (err error) {
 			return nil
 		}
 	}
-	c.conn, err = pgx.Connect(context.Background(), c.DSN())
+	c.conn, err = pgx.Connect(ctx, c.DSN())
 	if err != nil {
 		c.conn = nil
 		return err
 	}
 	if ok, err := c.VerifyRole(); err != nil {
 		return err
-	} else if ! ok {
+	} else if !ok {
 		return fmt.Errorf("we are connected to a database with another role then wished for")
 	}
 	return nil
@@ -92,7 +91,7 @@ func (c *Conn) CheckExists(query string, args ...interface{}) (exists bool, err 
 		return false, err
 	}
 	var answer string
-	err = c.conn.QueryRow(context.Background(), query, args...).Scan(&answer)
+	err = c.conn.QueryRow(ctx, query, args...).Scan(&answer)
 	if err == pgx.ErrNoRows {
 		return false, nil
 	}
@@ -107,7 +106,7 @@ func (c *Conn) Exec(query string, args ...interface{}) (err error) {
 	if err != nil {
 		return err
 	}
-	_, err = c.conn.Exec(context.Background(), query, args...)
+	_, err = c.conn.Exec(ctx, query, args...)
 	return err
 }
 
@@ -117,7 +116,7 @@ func (c *Conn) GetOneField(query string, args ...interface{}) (answer string, er
 		return "", err
 	}
 
-	err = c.conn.QueryRow(context.Background(), query, args...).Scan(&answer)
+	err = c.conn.QueryRow(ctx, query, args...).Scan(&answer)
 	if err != nil {
 		return "", fmt.Errorf("runQueryGetOneField (%s) failed: %v\n", query, err)
 	}
@@ -130,7 +129,7 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 		return answer, err
 	}
 	var cursor pgx.Rows
-	if cursor, err = c.conn.Query(context.Background(), query, args...); err != nil {
+	if cursor, err = c.conn.Query(ctx, query, args...); err != nil {
 		return answer, err
 	} else {
 		for _, header := range cursor.FieldDescriptions() {
@@ -153,7 +152,7 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 }
 
 func (c *Conn) VerifyRole() (ok bool, err error) {
-	if _, ok := ValidRoles[c.Role]; ! ok {
+	if _, ok := ValidRoles[c.Role]; !ok {
 		return false, fmt.Errorf("invalid role was specified for conn %s", c.ConnParams.String(true))
 	}
 	if role, err := c.GetOneField("select case pg_is_in_recovery() when true then 'standby' else 'primary' end"); err != nil {
