@@ -81,15 +81,6 @@ func (ss Steps) Clone() Steps {
 	return clone
 }
 
-func (ss Steps) stepState(stepName string) stepState {
-	if step, exists := ss[stepName]; !exists {
-		log.Panicf("Looking for a step %s that does not exist???", stepName)
-	} else {
-		return step.state
-	}
-	return stepStateUnknown
-}
-
 func (ss Steps) setStepState(stepName string, newState stepState) {
 	if step, exists := ss[stepName]; !exists {
 		log.Panicf("Looking for a step %s that does not exist???", stepName)

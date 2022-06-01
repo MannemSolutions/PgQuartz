@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"os"
 
+	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"github.com/mannemsolutions/PgQuartz/pkg/pg"
 	"go.uber.org/zap"

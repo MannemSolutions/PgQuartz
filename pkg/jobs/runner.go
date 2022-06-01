@@ -33,7 +33,7 @@ func (r *Runner) Run() {
 			break
 		} else if step, exists := r.parent.Steps[instance.Step]; !exists {
 			log.Panicf("Runner %d: Trying to run a step %s that does not exist?", r.index, instance.Step)
-	} else {
+		} else {
 			args := step.GetInstanceArgs(instance.Index)
 			log.Debugf("Runner %d: Running step %s, instance %d with args %s", r.index, instance.Step,
 				instance.Index, args.String())

@@ -148,7 +148,7 @@ func (c Command) ScriptFile() (scriptFile string) {
 			log.Panicf("error writing inline command to tempfile: %e", err)
 		}
 		// os.Chmod should also work on Windows
-		if err = os.Chmod(c.tmpFile.Name(), 0700); err != nil {
+		if err = os.Chmod(c.tmpFile.Name(), 0600); err != nil {
 			log.Panicf("error making inline tempfile script executable: %e", err)
 		}
 		return c.tmpFile.Name()
@@ -190,7 +190,7 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 }
 
 func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
-	exCommand := exec.Command("/bin/bash", c.ScriptFile())
+	exCommand := exec.Command("/bin/bash", c.ScriptFile()) // #nosec
 	exCommand.Env = args.AsEnv()
 	var stdOut, stdErr bytes.Buffer
 	exCommand.Stdout = io.MultiWriter(&stdOut)
