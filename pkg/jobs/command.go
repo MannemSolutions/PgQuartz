@@ -20,9 +20,9 @@ func (cs Commands) Verify(stepName string, conns Connections) (errs []error) {
 	return errs
 }
 
-func (cs Commands) Run(conns Connections) (err error) {
+func (cs Commands) Run(conns Connections, args InstanceArguments) (err error) {
 	for _, command := range cs {
-		if err = command.Run(conns); err != nil {
+		if err = command.Run(conns, args); err != nil {
 			return err
 		}
 	}
@@ -74,6 +74,16 @@ type Command struct {
 	Test    string            `yaml:"test,omitempty"`
 	Matrix  map[string]string `yaml:"matrix,omitempty"`
 	tmpFile *os.File
+}
+
+func (c Command) GetCommands() string {
+	if c.Name != "" {
+		return c.Name
+	}
+	if c.Inline != "" {
+		return c.Inline
+	}
+	return c.File
 }
 
 func (c Command) VerifyScriptFile() (err error) {
@@ -167,20 +177,21 @@ func (c Command) ScriptBody() (scriptBody string) {
 	return string(scriptBodyBytes)
 }
 
-func (c *Command) Run(conns Connections) (err error) {
-	log.Debugf("Running the following command: %s", c.Name)
+func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
+	log.Debugf("Running the following command: %s", c.GetCommands())
 	if c.Type == "" || c.Type == "shell" {
-		return c.RunOsCommand()
+		return c.RunOsCommand(args)
 	}
-	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody()); err != nil {
+	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody(), args); err != nil {
 		c.Rc = 1
 		return err
 	}
 	return nil
 }
 
-func (c *Command) RunOsCommand() (err error) {
+func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
 	exCommand := exec.Command("/bin/bash", c.ScriptFile())
+	exCommand.Env = args.AsEnv()
 	var stdOut, stdErr bytes.Buffer
 	exCommand.Stdout = io.MultiWriter(&stdOut)
 	exCommand.Stderr = io.MultiWriter(&stdErr)
@@ -195,6 +206,6 @@ func (c *Command) RunOsCommand() (err error) {
 	}
 	c.stdOut = NewResultFromString(stdOut.String())
 	c.stdErr = NewResultFromString(stdErr.String())
-	log.Debugf("command %s successfully executed", c.Name)
+	log.Debugf("command %s successfully executed", c.GetCommands())
 	return nil
 }

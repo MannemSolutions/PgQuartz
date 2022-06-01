@@ -2,21 +2,25 @@ package jobs
 
 import "os"
 
+type Work struct {
+	Step string
+	Index int
+}
+
 type Handler struct {
 	Config  Config
 	Steps   Steps
 	Runners Runners
-	Work    []string
-	ToDo    chan string
-	Done    chan string
+	ToDo    chan Work
+	Done    chan Work
 }
 
 func NewHandler(c Config) Handler {
 	return Handler{
 		Config: c,
-		Steps:  c.Steps.Clone(),
-		ToDo:   make(chan string, len(c.Steps)),
-		Done:   make(chan string, len(c.Steps)),
+		Steps:  c.Steps,
+		ToDo:   make(chan Work, c.Steps.GetNumInstances()),
+		Done:   make(chan Work, c.Steps.GetNumInstances()),
 	}
 }
 
@@ -80,7 +84,7 @@ func (h *Handler) RunChecks() {
 		return
 	}
 	log.Debug("Checking job results")
-	if err := h.Config.Checks.Run(h.Config.Conns); err != nil {
+	if err := h.Config.Checks.Run(h.Config.Conns, nil); err != nil {
 		log.Errorf("error occurred while running checks: %e", err)
 	}
 }
@@ -101,7 +105,12 @@ func (h *Handler) newWork() (done bool) {
 			log.Errorf("error while checking step %s: %e", name, err)
 			h.Steps.setStepState(name, stepStateSkipped)
 		} else if result {
-			h.ToDo <- name
+			instances := h.Steps[name].GetInstances()
+			log.Debugf("scheduling %d instances for step %s", len(instances), name)
+			for i, args := range instances {
+				log.Debugf("scheduling step %s, instance %d (%s)", name, i, args.String())
+				h.ToDo <- Work{name, i}
+			}
 			h.Steps.setStepState(name, stepStateScheduled)
 		} else {
 			h.Steps.setStepState(name, stepStateDone)
@@ -112,10 +121,10 @@ func (h *Handler) newWork() (done bool) {
 
 func (h *Handler) processDone() {
 	select {
-	case doneStep := <-h.Done:
-		if doneStep != "" {
-			log.Debugf("This step is done: %s", doneStep)
-			h.Steps.setStepState(doneStep, stepStateDone)
+	case doneInstance := <-h.Done:
+		if doneInstance.Step != "" {
+			log.Debugf("This step instance is done: %s.%d", doneInstance.Step, doneInstance.Index)
+			h.Steps[doneInstance.Step].InstanceFinished(doneInstance.Index)
 		}
 	default:
 		//log.Infof("break")
