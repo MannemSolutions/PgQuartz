@@ -1,0 +1,38 @@
+name: Release workflow for tagged versions
+on:
+  push:
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v0.2.19, v0.2.14a
+
+env:
+  GO_VERSION: 1.16
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        # build and publish in parallel: linux/386, linux/amd64, windows/386, windows/amd64, darwin/amd64 
+        goos: [linux, windows, darwin]
+        goarch: ["386", amd64]
+        exclude:  
+          - goarch: "386"
+            goos: darwin 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create release
+        uses: softprops/action-gh-release@v1
+
+      - name: Build and release binaries
+        uses: wangyoucao577/go-release-action@v1.19
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          goos: ${{ matrix.goos }}
+          goarch: ${{ matrix.goarch }}
+          project_path: "./cmd/pgquartz"
+          extra_files: LICENSE README.md
+          pre_command: ./set_version.sh
+          sha256sum: TRUE

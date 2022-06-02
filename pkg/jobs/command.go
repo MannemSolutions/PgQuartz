@@ -73,7 +73,7 @@ type Command struct {
 	Rc      int               `yaml:"-"`
 	Test    string            `yaml:"test,omitempty"`
 	Matrix  map[string]string `yaml:"matrix,omitempty"`
-	tmpFile *os.File
+	tmpFile string
 }
 
 func (c Command) GetCommands() string {
@@ -136,24 +136,27 @@ func (c Command) Verify(stepName string, conns Connections) (errs []error) {
 
 // ScriptFile returns a path to the script holding the command.
 // This could be the symlink evaluated version of Command.File.
-// Or this could be an executable tempfile with Command.Inline as contents.
+// Or this could be an executable temporary file with Command.Inline as contents.
 // This is wat is used to run shell commands
-func (c Command) ScriptFile() (scriptFile string) {
+func (c *Command) ScriptFile() (scriptFile string) {
 	var err error
+	var tmpFile *os.File
 	if c.Inline != "" {
-		if c.tmpFile, err = ioutil.TempFile("", "pgQuartsInlineCommand"); err != nil {
+		if tmpFile, err = ioutil.TempFile("", "pgQuartsInlineCommand"); err != nil {
 			log.Panicf("error creating tempfile: %e", err)
 		}
-		if _, err = c.tmpFile.WriteString(c.Inline); err != nil {
+		c.tmpFile = tmpFile.Name()
+		if _, err = tmpFile.WriteString(c.Inline); err != nil {
 			log.Panicf("error writing inline command to tempfile: %e", err)
-		}
-		// os.Chmod should also work on Windows
-		if err = os.Chmod(c.tmpFile.Name(), 0700); err != nil {
+		} else if err = tmpFile.Close(); err != nil {
+			log.Panicf("error closing the tmpfile: %e", err)
+			// os.Chmod should also work on Windows
+		} else if err = os.Chmod(tmpFile.Name(), 0600); err != nil {
 			log.Panicf("error making inline tempfile script executable: %e", err)
 		}
-		return c.tmpFile.Name()
+		return c.tmpFile
 	}
-	if err := c.VerifyScriptFile(); err != nil {
+	if err = c.VerifyScriptFile(); err != nil {
 		log.Panicf("Cannot run script %s", c.File)
 	}
 	if scriptFile, err = filepath.EvalSymlinks(c.File); err != nil {
@@ -189,12 +192,23 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 	return nil
 }
 
+func (c *Command) CleanTempFile() {
+	if c.tmpFile != "" {
+		log.Debugf("removing tmp file %s", c.tmpFile)
+		if err := os.Remove(c.tmpFile); err != nil {
+			log.Errorf("error removing file %s: %e", c.tmpFile, err)
+		}
+		c.tmpFile = ""
+	}
+}
+
 func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
-	exCommand := exec.Command("/bin/bash", c.ScriptFile())
+	exCommand := exec.Command("/bin/bash", c.ScriptFile()) // #nosec
 	exCommand.Env = args.AsEnv()
 	var stdOut, stdErr bytes.Buffer
 	exCommand.Stdout = io.MultiWriter(&stdOut)
 	exCommand.Stderr = io.MultiWriter(&stdErr)
+	defer c.CleanTempFile()
 	if err = exCommand.Run(); err != nil {
 		switch typedErr := err.(type) {
 		case *exec.ExitError:

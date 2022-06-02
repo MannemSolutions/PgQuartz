@@ -3,7 +3,7 @@ package jobs
 import "os"
 
 type Work struct {
-	Step string
+	Step  string
 	Index int
 }
 

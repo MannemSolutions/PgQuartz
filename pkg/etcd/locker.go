@@ -3,9 +3,10 @@ package etcd
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
-	"time"
 )
 
 type Locker struct {
@@ -81,12 +82,12 @@ func (el *Locker) Close() {
 	}
 	log.Debug("closing session")
 	if el.session != nil {
-		el.session.Close()
+		_ = el.session.Close()
 		el.session = nil
 	}
 	log.Debug("closing client")
 	if el.cli != nil {
-		el.cli.Close()
+		_ = el.cli.Close()
 		el.cli = nil
 	}
 }

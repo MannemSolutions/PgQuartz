@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+
 	"github.com/mannemsolutions/PgQuartz/internal"
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"

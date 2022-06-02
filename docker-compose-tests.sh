@@ -1,13 +1,13 @@
 #!/bin/bash
 set -e
 
-docker-compose down --remove-orphans #&& docker rmi pgquartz_builder pgquartz_stolon || echo new or partial install
+#docker-compose down --remove-orphans #&& docker rmi pgquartz_builder pgquartz_stolon || echo new or partial install
 docker-compose up -d --scale stolon=3
-docker exec -ti pgquartz_builder_1 /bin/bash -ic 'cd /host && make build_dlv build_pgquartz'
+docker exec pgquartz_builder_1 /bin/bash -ic 'cd /host && make build_dlv build_pgquartz'
 
 for ((i=1;i<=3;i++)); do
   echo "pgquartz_stolon_${i}"
-  docker exec -ti "pgquartz_stolon_${i}" /host/bin/pgquartz.x86_64 -c /host/jobs/jobspec1/job.yml &
+  docker exec "pgquartz_stolon_${i}" /host/bin/pgquartz.x86_64 -c /host/jobs/jobspec1/job.yml &
   sleep 1
 done
 exit
