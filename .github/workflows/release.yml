@@ -33,6 +33,7 @@ jobs:
           goos: ${{ matrix.goos }}
           goarch: ${{ matrix.goarch }}
           project_path: "./cmd/pgquartz"
+          binary_name: pgquartz
           extra_files: LICENSE README.md
           pre_command: ./set_version.sh
           sha256sum: TRUE
