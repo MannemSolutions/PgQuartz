@@ -5,9 +5,15 @@ import (
 )
 
 var (
-	log *zap.SugaredLogger
+	log  *zap.SugaredLogger
+	atom zap.AtomicLevel
 )
 
-func InitLogger(logger *zap.SugaredLogger) {
+func InitLogger(logger *zap.SugaredLogger, level zap.AtomicLevel) {
 	log = logger
+	atom = level
+}
+
+func debug() bool {
+	return atom.Level() == zap.DebugLevel
 }

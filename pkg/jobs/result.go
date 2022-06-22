@@ -20,11 +20,26 @@ func NewResultFromString(lines string) (result Result) {
 	return NewResult(strings.Split(lines, "\n"))
 }
 
+func (r Result) String() string {
+	var lines []string
+	for _, line := range r {
+		lines = append(lines, string(line))
+	}
+	return strings.Join(lines, "\n")
+}
+
 func (r Result) Contains(part string) bool {
 	for _, l := range r {
 		if l.Contains(part) {
+			if debug() {
+				log.Debugf("%s contains %s", r.String(), part)
+			}
+			log.Debug()
 			return true
 		}
+	}
+	if debug() {
+		log.Debugf("%s does not contain %s", r.String(), part)
 	}
 	return false
 }
@@ -32,8 +47,14 @@ func (r Result) Contains(part string) bool {
 func (r Result) ContainsLine(line string) bool {
 	for _, l := range r {
 		if string(l) == line {
+			if debug() {
+				log.Debugf("%s contains line %s", r.String(), line)
+			}
 			return true
 		}
+	}
+	if debug() {
+		log.Debugf("%s does not contain line %s", r.String(), line)
 	}
 	return false
 }
@@ -45,9 +66,15 @@ func (r Result) RegExpContains(exp string) bool {
 	} else {
 		for _, l := range r {
 			if re.Match([]byte(l)) {
+				if debug() {
+					log.Debugf("%s contains regexp %s", r.String(), exp)
+				}
 				return true
 			}
 		}
+	}
+	if debug() {
+		log.Debugf("%s does not contain regexp %s", r.String(), exp)
 	}
 	return false
 }

@@ -25,7 +25,7 @@ func initLogger() {
 		zapcore.Lock(os.Stdout),
 		atom,
 	)).Sugar()
-	jobs.InitLogger(log)
+	jobs.InitLogger(log, atom)
 	pg.InitLogger(log)
 	etcd.InitLogger(log)
 }
