@@ -11,7 +11,7 @@ import (
 	"syscall"
 )
 
-type Commands []Command
+type Commands []*Command
 
 func (cs Commands) Verify(stepName string, conns Connections) (errs []error) {
 	for _, command := range cs {
@@ -26,8 +26,8 @@ func (cs *Commands) Initialize() {
 	}
 }
 
-func (cs Commands) Run(conns Connections, args InstanceArguments) (err error) {
-	for _, command := range cs {
+func (cs *Commands) Run(conns Connections, args InstanceArguments) (err error) {
+	for _, command := range *cs {
 		if err = command.Run(conns, args); err != nil {
 			return err
 		}
@@ -37,7 +37,7 @@ func (cs Commands) Run(conns Connections, args InstanceArguments) (err error) {
 
 func (cs Commands) Clone() (clone Commands) {
 	for _, c := range cs {
-		clone = append(clone, Command{
+		clone = append(clone, &Command{
 			Type:   c.Type,
 			Inline: c.Inline,
 			File:   c.File,
