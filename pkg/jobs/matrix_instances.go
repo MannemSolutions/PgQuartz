@@ -54,12 +54,12 @@ func (ias InstanceArguments) String() string {
 	// loop over elements of slice
 	var keyValues []string
 	for key, value := range ias {
-		keyValues = append(keyValues, fmt.Sprintf("'%s': %s",
+		keyValues = append(keyValues, fmt.Sprintf("'%s': '%s'",
 			strings.Replace(key, "'", "''", -1),
 			strings.Replace(value, "'", "''", -1),
 		))
 	}
-	return fmt.Sprintf("{ %s }", strings.Join(keyValues, ","))
+	return fmt.Sprintf("{ %s }", strings.Join(keyValues, ", "))
 }
 
 func (is Instances) String() string {
