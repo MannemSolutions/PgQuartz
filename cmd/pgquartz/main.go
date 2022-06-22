@@ -27,6 +27,7 @@ func main() {
 	if config, err = internal.NewConfig(); err != nil {
 		log.Fatal(err)
 	} else {
+		config.Initialize()
 		enableDebug(config.Debug)
 		config.Initialize()
 		initContext()

@@ -20,6 +20,12 @@ func (cs Commands) Verify(stepName string, conns Connections) (errs []error) {
 	return errs
 }
 
+func (cs *Commands) Initialize() {
+	for _, command := range *cs {
+		command.Initialize()
+	}
+}
+
 func (cs Commands) Run(conns Connections, args InstanceArguments) (err error) {
 	for _, command := range cs {
 		if err = command.Run(conns, args); err != nil {
@@ -38,6 +44,7 @@ func (cs Commands) Clone() (clone Commands) {
 			Matrix: c.Matrix,
 		})
 	}
+	clone.Initialize()
 	return clone
 }
 
@@ -50,14 +57,18 @@ func (cs Commands) Rc() (rc int) {
 
 func (cs Commands) StdOut() (stdOut Result) {
 	for _, command := range cs {
-		stdOut = append(stdOut, command.stdOut...)
+		for args := range command.stdOut {
+			stdOut = append(stdOut, command.stdOut[args]...)
+		}
 	}
 	return stdOut
 }
 
 func (cs Commands) StdErr() (stdErr Result) {
 	for _, command := range cs {
-		stdErr = append(stdErr, command.stdErr...)
+		for args := range command.stdOut {
+			stdErr = append(stdErr, command.stdErr[args]...)
+		}
 	}
 	return stdErr
 }
@@ -68,8 +79,8 @@ type Command struct {
 	Inline string `yaml:"inline,omitempty"`
 	// Home (~) is not resolved
 	File    string            `yaml:"file,omitempty"`
-	stdOut  Result            `yaml:"-"`
-	stdErr  Result            `yaml:"-"`
+	stdOut  InstanceResult    `yaml:"-"`
+	stdErr  InstanceResult    `yaml:"-"`
 	Rc      int               `yaml:"-"`
 	Test    string            `yaml:"test,omitempty"`
 	Matrix  map[string]string `yaml:"matrix,omitempty"`
@@ -134,6 +145,11 @@ func (c Command) Verify(stepName string, conns Connections) (errs []error) {
 	return errs
 }
 
+func (c *Command) Initialize() {
+	c.stdOut = make(InstanceResult)
+	c.stdErr = make(InstanceResult)
+}
+
 // ScriptFile returns a path to the script holding the command.
 // This could be the symlink evaluated version of Command.File.
 // Or this could be an executable temporary file with Command.Inline as contents.
@@ -185,7 +201,7 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand(args)
 	}
-	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody(), args); err != nil {
+	if c.stdOut[args.String()], err = conns.Execute(c.Type, c.ScriptBody(), args); err != nil {
 		c.Rc = 1
 		return err
 	}
@@ -218,8 +234,8 @@ func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
 		}
 		return err
 	}
-	c.stdOut = NewResultFromString(stdOut.String())
-	c.stdErr = NewResultFromString(stdErr.String())
+	c.stdOut[args.String()] = NewResultFromString(stdOut.String())
+	c.stdErr[args.String()] = NewResultFromString(stdErr.String())
 	log.Debugf("command %s successfully executed", c.GetCommands())
 	return nil
 }

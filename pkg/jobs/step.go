@@ -55,7 +55,7 @@ func (ss Steps) Verify(conns Connections) (errs []error) {
 
 func (ss *Steps) Initialize() {
 	for _, step := range *ss {
-		step.SetInstances()
+		step.Initialize()
 	}
 }
 
@@ -75,7 +75,7 @@ func (ss Steps) Clone() Steps {
 	clone := make(Steps)
 	for name, step := range ss {
 		newStep := step.Clone()
-		newStep.SetInstances()
+		newStep.Initialize()
 		clone[name] = newStep
 	}
 	return clone
@@ -236,6 +236,11 @@ func (s Step) StdErr() Result {
 
 func (s Step) Rc() int {
 	return s.Commands.Rc()
+}
+
+func (s *Step) Initialize() {
+	s.Commands.Initialize()
+	s.SetInstances()
 }
 
 func (s *Step) SetInstances() {
