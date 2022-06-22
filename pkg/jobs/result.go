@@ -8,7 +8,6 @@ import (
 type ResultLine string
 
 type Result []ResultLine
-type InstanceResult map[string]Result
 
 func NewResult(lines []string) (result Result) {
 	for _, line := range lines {

@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -19,12 +20,6 @@ type MatrixArgs map[string]MatrixArgValues
 // InstanceArguments are key=value pairs which is extrapolated from MatrixArgs
 // One InstanceArguments is parsed to a step instance
 type InstanceArguments map[string]string
-
-// Instances are what is run multiple times with different arguments for every step command.
-// Every step command is run n times, once for every InstanceArguments in Instances.
-// Every instance of a step command is a separate Instance run with the specific InstanceArguments as arguments.
-// Step Command Instances can be run multiple times in parallel.
-type Instances []InstanceArguments
 
 /*
 Example:
@@ -59,15 +54,8 @@ func (ias InstanceArguments) String() string {
 			strings.Replace(value, "'", "''", -1),
 		))
 	}
+	sort.Strings(keyValues)
 	return fmt.Sprintf("{ %s }", strings.Join(keyValues, ", "))
-}
-
-func (is Instances) String() string {
-	var l []string
-	for _, s := range is {
-		l = append(l, s.String())
-	}
-	return fmt.Sprintf("[ %s ]", strings.Join(l, ", "))
 }
 
 func (ias InstanceArguments) Clone() (newMia InstanceArguments) {
@@ -105,7 +93,7 @@ func (ias InstanceArguments) ParseQuery(query string) (parsedQuery string, args 
 	return parsedQuery, args
 }
 
-func (mavs MatrixArgValues) Explode(key string, collected Instances) (exploded []InstanceArguments) {
+func (mavs MatrixArgValues) Explode(key string, collected []InstanceArguments) (exploded []InstanceArguments) {
 	for _, value := range mavs {
 		for _, mia := range collected {
 			mia = mia.Clone()

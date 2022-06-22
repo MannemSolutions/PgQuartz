@@ -45,7 +45,7 @@ steps:
       - awesome2
       - awesome3
     when:
-      - '.Steps.awesome3.Commands.StdOut.Contains "Mijn PID"'
+      - '.Steps.awesome3.Instances.StdOut.Contains "Mijn PID"'
 
 checks:
   - type: shell
@@ -85,4 +85,4 @@ etcdConfig:
   endpoints:
     - localhost:2379
   lockKey: awesome
-  lockTimeout: 10s
+  lockTimeout: 1m

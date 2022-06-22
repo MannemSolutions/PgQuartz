@@ -3,8 +3,8 @@ package jobs
 import "os"
 
 type Work struct {
-	Step  string
-	Index int
+	Step   string
+	ArgKey string
 }
 
 type Handler struct {
@@ -107,9 +107,10 @@ func (h *Handler) newWork() (done bool) {
 		} else if result {
 			instances := h.Steps[name].GetInstances()
 			log.Debugf("scheduling %d instances for step %s", len(instances), name)
-			for i, args := range instances {
-				log.Debugf("scheduling step %s, instance %d (%s)", name, i, args.String())
-				h.ToDo <- Work{name, i}
+			for _, i := range instances {
+				instanceName := i.Name()
+				log.Debugf("scheduling instance [%s].[%s]", name, instanceName)
+				h.ToDo <- Work{name, instanceName}
 			}
 			h.Steps.setStepState(name, stepStateScheduled)
 		} else {
@@ -123,8 +124,8 @@ func (h *Handler) processDone() {
 	select {
 	case doneInstance := <-h.Done:
 		if doneInstance.Step != "" {
-			log.Debugf("This step instance is done: %s.%d", doneInstance.Step, doneInstance.Index)
-			h.Steps[doneInstance.Step].InstanceFinished(doneInstance.Index)
+			log.Debugf("This step instance is done: [%s].[%s]", doneInstance.Step, doneInstance.ArgKey)
+			h.Steps.InstanceFinished(doneInstance)
 		}
 	default:
 		//log.Infof("break")

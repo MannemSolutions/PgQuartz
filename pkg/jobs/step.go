@@ -41,6 +41,17 @@ func (sst stepState) String() string {
 
 type Steps map[string]*Step
 
+func (ss *Steps) InstanceFinished(w Work) {
+	if s, sExists := (*ss)[w.Step]; !sExists {
+		log.Panicf("Unknown step %s is finished", w.Step)
+	} else if i, iExists := s.Instances[w.ArgKey]; !iExists {
+		log.Panicf("Unknown instance %s for step %s is finished", w.ArgKey, w.Step)
+	} else {
+		i.done = true
+		log.Debugf("Set instance [%s].[%s] to done", w.Step, w.ArgKey)
+	}
+}
+
 func (ss Steps) Verify(conns Connections) (errs []error) {
 	for stepName, step := range ss {
 		errs = append(errs, step.Commands.Verify(stepName, conns)...)
@@ -67,7 +78,7 @@ func (ss Steps) GetNumInstances() int {
 		log.Debugf("step %s has %d instances", name, num)
 		count += num
 	}
-	log.Debugf("counting %d instances")
+	log.Debugf("counting %d instances", count)
 	return count
 }
 
@@ -104,7 +115,7 @@ func (ss Steps) GetReadySteps() (ready []string) {
 		for _, dependency := range step.Depends {
 			if subStep, exists := ss[dependency]; !exists {
 				log.Panicf("step %s depends on unknows step %s", stepName, dependency)
-			} else if subStep.state != stepStateDone && subStep.state != stepStateSkipped {
+			} else if !subStep.Done() && subStep.state != stepStateSkipped {
 				isReady = false
 				break
 			}
@@ -160,11 +171,8 @@ type Step struct {
 	Depends   []string `yaml:"depends,omitempty"`
 	state     stepState
 	When      []string   `yaml:"when,omitempty"`
-	stdOut    Result     `yaml:"-"`
-	stdErr    Result     `yaml:"-"`
 	Matrix    MatrixArgs `yaml:"matrix,omitempty"`
-	instances Instances
-	done      int
+	Instances Instances  `yaml:"-"`
 }
 
 func (s Step) Waiting() bool {
@@ -179,7 +187,7 @@ func (s *Step) Done() bool {
 	if s.state == stepStateDone {
 		return true
 	}
-	if s.done >= len(s.instances) {
+	if s.Instances.Done() {
 		if err := s.setState(stepStateDone); err != nil {
 			log.Panicf("Could not issue done state for step %e", err)
 		}
@@ -188,16 +196,16 @@ func (s *Step) Done() bool {
 	return false
 }
 
-func (s *Step) GetInstanceArgs(instance int) InstanceArguments {
-	return s.instances[instance]
-}
-
-func (s *Step) InstanceFinished(instance int) bool {
-	if s.done > len(s.instances) {
+func (s *Step) InstanceFinished(instance string) bool {
+	if s.Done() {
 		log.Fatalf("calling instanceFinished on a step that is already finished")
 	}
-	log.Debugf("instance done: %s", s.instances[instance].String())
-	s.done += 1
+	log.Debugf("instance done: %s", s.Instances[instance].Name())
+	if i, exists := s.Instances[instance]; !exists {
+		log.Fatalf("calling instanceFinished on an instance that does not exist")
+	} else {
+		i.done = true
+	}
 	return s.Done()
 }
 
@@ -212,26 +220,21 @@ func (s *Step) setState(newState stepState) error {
 
 func (s Step) Clone() *Step {
 	return &Step{
-		Commands: s.Commands.Clone(),
-		Depends:  s.Depends,
-		state:    stepStateWaiting,
-		When:     s.When,
-		Matrix:   s.Matrix,
+		Commands:  s.Commands.Clone(),
+		Instances: s.Instances.Clone(),
+		Depends:   s.Depends,
+		state:     stepStateWaiting,
+		When:      s.When,
+		Matrix:    s.Matrix,
 	}
 }
 
 func (s Step) StdOut() Result {
-	if s.stdOut == nil {
-		s.stdOut = s.Commands.StdOut()
-	}
-	return s.stdOut
+	return s.Instances.StdOut()
 }
 
 func (s Step) StdErr() Result {
-	if s.stdErr == nil {
-		s.stdErr = s.Commands.StdErr()
-	}
-	return s.stdErr
+	return s.Instances.StdErr()
 }
 
 func (s Step) Rc() int {
@@ -239,17 +242,20 @@ func (s Step) Rc() int {
 }
 
 func (s *Step) Initialize() {
-	s.Commands.Initialize()
 	s.SetInstances()
 }
 
 func (s *Step) SetInstances() {
-	if len(s.instances) == 0 {
-		s.instances = s.Matrix.Instances()
+	if len(s.Instances) > 0 {
+		return
+	}
+	s.Instances = make(Instances)
+	for _, args := range s.Matrix.Instances() {
+		s.Instances[args.String()] = NewInstance(args, s.Commands.Clone())
 	}
 }
 
 func (s Step) GetInstances() Instances {
-	//log.Debugf("instances: %s", s.instances.String())
-	return s.instances
+	//log.Debugf("Instances: %s", s.Instances.String())
+	return s.Instances
 }
