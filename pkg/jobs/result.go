@@ -1,6 +1,7 @@
 package jobs
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 )
@@ -17,15 +18,19 @@ func NewResult(lines []string) (result Result) {
 }
 
 func NewResultFromString(lines string) (result Result) {
-	return NewResult(strings.Split(lines, "\n"))
+	lines = strings.TrimSuffix(lines, "\n")
+	for _, line := range strings.Split(lines, "\n") {
+		result = append(result, ResultLine(line))
+	}
+	return result
 }
 
 func (r Result) String() string {
 	var lines []string
 	for _, line := range r {
-		lines = append(lines, string(line))
+		lines = append(lines, fmt.Sprintf("'%s'", strings.Replace(string(line), "'", "''", -1)))
 	}
-	return strings.Join(lines, "\n")
+	return fmt.Sprintf("[ %s ]", strings.Join(lines, ", "))
 }
 
 func (r Result) Contains(part string) bool {

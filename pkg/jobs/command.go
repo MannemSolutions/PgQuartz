@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"syscall"
 )
 
@@ -219,8 +218,8 @@ func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
 		}
 		return err
 	}
-	c.stdOut = NewResultFromString(strings.Trim(stdOut.String(), "\n"))
-	c.stdErr = NewResultFromString(strings.Trim(stdErr.String(), "\n"))
+	c.stdOut = NewResultFromString(stdOut.String())
+	c.stdErr = NewResultFromString(stdErr.String())
 	log.Debugf("command %s successfully executed", c.GetCommands())
 	return nil
 }

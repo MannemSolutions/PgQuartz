@@ -1,6 +1,9 @@
 package pg
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Row []string
 type Result struct {
@@ -20,12 +23,17 @@ func (r Result) AsMapArray() (arraysOfMaps []map[string]string) {
 }
 
 func (r Result) AsStringArray(params ...string) (arraysOfStrings []string) {
-	var delimiter = "\t"
+	var delimiter = ", "
 	if len(params) > 0 {
 		delimiter = params[0]
 	}
 	for _, row := range r.rows {
-		arraysOfStrings = append(arraysOfStrings, strings.Join(row, delimiter))
+		var cols []string
+		for i, col := range row {
+			cols = append(cols, fmt.Sprintf("{%s}={%s}", r.header[i],
+				strings.Replace(col, "'", "''", -1)))
+		}
+		arraysOfStrings = append(arraysOfStrings, strings.Join(cols, delimiter))
 	}
 	return arraysOfStrings
 }
