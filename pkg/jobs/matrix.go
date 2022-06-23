@@ -114,5 +114,8 @@ func (mas MatrixArgs) Instances() (ias []InstanceArguments) {
 			ias = values.Explode(arg, ias)
 		}
 	}
+	if len(ias) == 0 {
+		ias = append(ias, InstanceArguments{"": ""})
+	}
 	return ias
 }
