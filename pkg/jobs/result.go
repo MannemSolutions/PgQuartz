@@ -25,6 +25,10 @@ func NewResultFromString(lines string) (result Result) {
 	return result
 }
 
+func (r Result) Append(additional Result) Result {
+	return append(r, additional...)
+}
+
 func (r Result) String() string {
 	var lines []string
 	for _, line := range r {

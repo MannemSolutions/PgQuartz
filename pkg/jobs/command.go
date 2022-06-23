@@ -32,10 +32,11 @@ func (cs *Commands) Run(conns Connections, args InstanceArguments) (err error) {
 func (cs Commands) Clone() (clone Commands) {
 	for _, c := range cs {
 		clone = append(clone, &Command{
-			Type:   c.Type,
-			Inline: c.Inline,
-			File:   c.File,
-			Matrix: c.Matrix,
+			Type:      c.Type,
+			Inline:    c.Inline,
+			File:      c.File,
+			Matrix:    c.Matrix,
+			BatchMode: c.BatchMode,
 		})
 	}
 	return clone
@@ -63,17 +64,18 @@ func (cs Commands) StdErr() (stdErr Result) {
 }
 
 type Command struct {
-	Name   string `yaml:"name"`
-	Type   string `yaml:"type"`
-	Inline string `yaml:"inline,omitempty"`
 	// Home (~) is not resolved
-	File    string            `yaml:"file,omitempty"`
-	stdOut  Result            `yaml:"-"`
-	stdErr  Result            `yaml:"-"`
-	Rc      int               `yaml:"-"`
-	Test    string            `yaml:"test,omitempty"`
-	Matrix  map[string]string `yaml:"matrix,omitempty"`
-	tmpFile string
+	File      string            `yaml:"file,omitempty"`
+	Name      string            `yaml:"name"`
+	Type      string            `yaml:"type"`
+	Inline    string            `yaml:"inline,omitempty"`
+	BatchMode bool              `yaml:"batchMode"`
+	stdOut    Result            `yaml:"-"`
+	stdErr    Result            `yaml:"-"`
+	Rc        int               `yaml:"-"`
+	Test      string            `yaml:"test,omitempty"`
+	Matrix    map[string]string `yaml:"matrix,omitempty"`
+	tmpFile   string
 }
 
 func (c Command) GetCommands() string {
@@ -185,7 +187,7 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand(args)
 	}
-	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody(), args); err != nil {
+	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody(), c.BatchMode, args); err != nil {
 		c.Rc = 1
 		return err
 	}
