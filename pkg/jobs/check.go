@@ -189,9 +189,9 @@ func (c *Check) CleanTempFile() {
 func CheckOutput(stdOut Result, expected string, unexpected string) error {
 	stdout := NewResultFromString(stdOut.String())
 	if expected != "" && !stdout.RegExpContains(expected) {
-		return fmt.Errorf("execpected string (%s) not found", expected)
+		return fmt.Errorf("expected string (%s) not found", expected)
 	} else if unexpected != "" && stdout.RegExpContains(unexpected) {
-		return fmt.Errorf("execpected string (%s) not found", unexpected)
+		return fmt.Errorf("unexpected string (%s) found", unexpected)
 	}
 	return nil
 }
