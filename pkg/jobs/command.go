@@ -173,15 +173,15 @@ func (c *Command) ScriptFile() (scriptFile string) {
 // For Command.File it reads the contents.
 // In other situations it just returns Command.Inline.
 // This is wat is used to run commands on database connections.
-func (c Command) ScriptBody() (scriptBody string) {
+func (c Command) ScriptBody() (string, error) {
 	if c.Inline != "" {
-		return c.Inline
+		return c.Inline, nil
 	}
 	scriptBodyBytes, err := os.ReadFile(c.File)
 	if err != nil {
-		log.Panicf("error while reading %s: %e", c.File, err)
+		return "", nil
 	}
-	return string(scriptBodyBytes)
+	return string(scriptBodyBytes), nil
 }
 
 func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
@@ -189,7 +189,9 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand(args)
 	}
-	if c.stdOut, err = conns.Execute(c.Type, c.ScriptBody(), c.BatchMode, args); err != nil {
+	if body, err := c.ScriptBody(); err != nil {
+		return err
+	} else if c.stdOut, err = conns.Execute(c.Type, body, c.BatchMode, args); err != nil {
 		c.Rc = 1
 		return err
 	}

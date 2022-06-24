@@ -148,15 +148,15 @@ func (c *Check) ScriptFile() (scriptFile string) {
 // For Check.File it reads the contents.
 // In other situations it just returns Check.Inline.
 // This is wat is used to run checks on database connections.
-func (c Check) ScriptBody() (scriptBody string) {
+func (c Check) ScriptBody() (string, error) {
 	if c.Inline != "" {
-		return c.Inline
+		return c.Inline, nil
 	}
 	scriptBodyBytes, err := os.ReadFile(c.File)
 	if err != nil {
-		log.Panicf("error while reading %s: %e", c.File, err)
+		return "", nil
 	}
-	return string(scriptBodyBytes)
+	return string(scriptBodyBytes), nil
 }
 
 func (c *Check) Run(conns Connections, args InstanceArguments) error {
@@ -164,7 +164,9 @@ func (c *Check) Run(conns Connections, args InstanceArguments) error {
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCheck(args)
 	}
-	if stdOut, err := conns.Execute(c.Type, c.ScriptBody(), c.BatchMode, args); err != nil && c.Rc == 0 {
+	if body, err := c.ScriptBody(); err != nil {
+		return err
+	} else if stdOut, err := conns.Execute(c.Type, body, c.BatchMode, args); err != nil && c.Rc == 0 {
 		return fmt.Errorf("%s unexpectedly generated an error", c.String())
 	} else if err == nil && c.Rc != 0 {
 		return fmt.Errorf("%s unexpectedly ran without error", c.String())
