@@ -167,7 +167,7 @@ func (c *Check) Run(conns Connections, args InstanceArguments) error {
 	if body, err := c.ScriptBody(); err != nil {
 		return err
 	} else if stdOut, err := conns.Execute(c.Type, body, c.BatchMode, args); err != nil && c.Rc == 0 {
-		return fmt.Errorf("%s unexpectedly generated an error", c.String())
+		return fmt.Errorf("%s unexpectedly generated an error: %e", c.String(), err)
 	} else if err == nil && c.Rc != 0 {
 		return fmt.Errorf("%s unexpectedly ran without error", c.String())
 	} else if expErr := CheckOutput(stdOut, c.Expected, c.Unexpected); expErr != nil {
