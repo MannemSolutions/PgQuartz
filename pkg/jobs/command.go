@@ -31,13 +31,7 @@ func (cs *Commands) Run(conns Connections, args InstanceArguments) (err error) {
 
 func (cs Commands) Clone() (clone Commands) {
 	for _, c := range cs {
-		clone = append(clone, &Command{
-			Type:      c.Type,
-			Inline:    c.Inline,
-			File:      c.File,
-			Matrix:    c.Matrix,
-			BatchMode: c.BatchMode,
-		})
+		clone = append(clone, c.Clone())
 	}
 	return clone
 }
@@ -65,17 +59,25 @@ func (cs Commands) StdErr() (stdErr Result) {
 
 type Command struct {
 	// Home (~) is not resolved
-	File      string            `yaml:"file,omitempty"`
-	Name      string            `yaml:"name"`
-	Type      string            `yaml:"type"`
-	Inline    string            `yaml:"inline,omitempty"`
-	BatchMode bool              `yaml:"batchMode"`
-	stdOut    Result            `yaml:"-"`
-	stdErr    Result            `yaml:"-"`
-	Rc        int               `yaml:"-"`
-	Test      string            `yaml:"test,omitempty"`
-	Matrix    map[string]string `yaml:"matrix,omitempty"`
+	File      string `yaml:"file,omitempty"`
+	Name      string `yaml:"name"`
+	Type      string `yaml:"type"`
+	Inline    string `yaml:"inline,omitempty"`
+	BatchMode bool   `yaml:"batchMode"`
+	stdOut    Result `yaml:"-"`
+	stdErr    Result `yaml:"-"`
+	Rc        int    `yaml:"-"`
+	Test      string `yaml:"test,omitempty"`
 	tmpFile   string
+}
+
+func (c Command) Clone() *Command {
+	return &Command{
+		Type:      c.Type,
+		Inline:    c.Inline,
+		File:      c.File,
+		BatchMode: c.BatchMode,
+	}
 }
 
 func (c Command) GetCommands() string {

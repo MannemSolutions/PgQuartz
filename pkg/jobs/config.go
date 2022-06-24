@@ -11,7 +11,7 @@ import (
 
 type Config struct {
 	Steps      Steps       `yaml:"steps"`
-	Checks     Commands    `yaml:"checks"`
+	Checks     Checks      `yaml:"checks"`
 	Target     Target      `yaml:"target"`
 	Conns      Connections `yaml:"connections"`
 	Alert      []Alert     `yaml:"alerts"`

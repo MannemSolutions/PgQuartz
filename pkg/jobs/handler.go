@@ -84,9 +84,7 @@ func (h *Handler) RunChecks() {
 		return
 	}
 	log.Debug("Checking job results")
-	if err := h.Config.Checks.Run(h.Config.Conns, nil); err != nil {
-		log.Errorf("error occurred while running checks: %e", err)
-	}
+	h.Config.Checks.Run(h.Config.Conns)
 }
 
 func (h *Handler) initRunners() {
