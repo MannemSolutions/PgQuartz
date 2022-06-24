@@ -25,7 +25,7 @@ func NewHandler(c Config) Handler {
 }
 
 func (h *Handler) VerifyConfig() {
-	log.Info("This is my config:\n", h.Config.String())
+	log.Debug("This is my config:\n", h.Config.String())
 	if h.Config.Workdir != "" {
 		log.Infof("Jumping to workdir %s", h.Config.Workdir)
 		if err := os.Chdir(h.Config.Workdir); err != nil {
