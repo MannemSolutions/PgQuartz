@@ -37,8 +37,8 @@ func main() {
 		h := jobs.NewHandler(config)
 		h.VerifyConfig()
 		h.RunSteps()
-		h.RunChecks()
 		locker.Close()
+		h.RunChecks()
 		jobCtxCancelFunc()
 	}
 }
