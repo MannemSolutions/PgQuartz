@@ -43,7 +43,6 @@ func (r Result) Contains(part string) bool {
 			if debug() {
 				log.Debugf("%s contains %s", r.String(), part)
 			}
-			log.Debug()
 			return true
 		}
 	}

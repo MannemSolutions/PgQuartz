@@ -48,22 +48,26 @@ type Check struct {
 
 func (c Check) Clone() *Check {
 	return &Check{
-		Type:      c.Type,
-		Inline:    c.Inline,
-		File:      c.File,
-		Matrix:    c.Matrix,
-		BatchMode: c.BatchMode,
+		Name:       c.Name,
+		Type:       c.Type,
+		Inline:     c.Inline,
+		File:       c.File,
+		Matrix:     c.Matrix,
+		BatchMode:  c.BatchMode,
+		Expected:   c.Expected,
+		Unexpected: c.Unexpected,
 	}
 }
 
 func (c Check) String() string {
-	var cmd string
+	var chk string
 	if c.Inline != "" {
-		cmd = fmt.Sprintf("inline: %s", c.Inline)
+		chk = fmt.Sprintf("inline='%s'", strings.Replace(
+			strings.Replace(c.Inline, "\n", "\\n", -1), "'", "''", -1))
 	} else {
-		cmd = fmt.Sprintf("file: %s", c.File)
+		chk = fmt.Sprintf("file=%s", c.File)
 	}
-	return fmt.Sprintf("name: '%s', type: %s, command: %s", strings.Replace(c.Name, "'", "''", -1), c.Type, cmd)
+	return fmt.Sprintf("name='%s', type=%s, %s", strings.Replace(c.Name, "'", "''", -1), c.Type, chk)
 }
 
 func (c Check) VerifyScriptFile() (err error) {
@@ -161,7 +165,7 @@ func (c Check) ScriptBody() (string, error) {
 }
 
 func (c *Check) Run(conns Connections, args InstanceArguments) error {
-	log.Debugf("Running the following check: %s, with arguments %s", c.String(), args.String())
+	log.Infof("Running check: %s, with arguments %s", c.String(), args.String())
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCheck(args)
 	}

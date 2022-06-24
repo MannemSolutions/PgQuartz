@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -67,12 +68,12 @@ type Command struct {
 	stdOut    Result `yaml:"-"`
 	stdErr    Result `yaml:"-"`
 	Rc        int    `yaml:"-"`
-	Test      string `yaml:"test,omitempty"`
 	tmpFile   string
 }
 
 func (c Command) Clone() *Command {
 	return &Command{
+		Name:      c.Name,
 		Type:      c.Type,
 		Inline:    c.Inline,
 		File:      c.File,
@@ -80,14 +81,15 @@ func (c Command) Clone() *Command {
 	}
 }
 
-func (c Command) GetCommands() string {
-	if c.Name != "" {
-		return c.Name
-	}
+func (c Command) String() string {
+	var cmd string
 	if c.Inline != "" {
-		return c.Inline
+		cmd = fmt.Sprintf("inline='%s'", strings.Replace(
+			strings.Replace(c.Inline, "\n", "\\n", -1), "'", "''", -1))
+	} else {
+		cmd = fmt.Sprintf("file=%s", c.File)
 	}
-	return c.File
+	return fmt.Sprintf("name='%s', type=%s, %s", strings.Replace(c.Name, "'", "''", -1), c.Type, cmd)
 }
 
 func (c Command) VerifyScriptFile() (err error) {
@@ -185,7 +187,7 @@ func (c Command) ScriptBody() (string, error) {
 }
 
 func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
-	log.Debugf("Running the following command: %s", c.GetCommands())
+	log.Infof("Running command: %s, args: %s", c.String(), args.String())
 	if c.Type == "" || c.Type == "shell" {
 		return c.RunOsCommand(args)
 	}
@@ -226,6 +228,6 @@ func (c *Command) RunOsCommand(args InstanceArguments) (err error) {
 	}
 	c.stdOut = NewResultFromString(stdOut.String())
 	c.stdErr = NewResultFromString(stdErr.String())
-	log.Debugf("command %s successfully executed", c.GetCommands())
+	log.Debugf("command %s successfully executed", c.String())
 	return nil
 }

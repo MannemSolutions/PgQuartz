@@ -49,10 +49,15 @@ func (ias InstanceArguments) String() string {
 	// loop over elements of slice
 	var keyValues []string
 	for key, value := range ias {
-		keyValues = append(keyValues, fmt.Sprintf("'%s': '%s'",
-			strings.Replace(key, "'", "''", -1),
-			strings.Replace(value, "'", "''", -1),
-		))
+		if len(key) > 0 {
+			keyValues = append(keyValues, fmt.Sprintf("'%s': '%s'",
+				strings.Replace(key, "'", "''", -1),
+				strings.Replace(value, "'", "''", -1),
+			))
+		}
+	}
+	if len(keyValues) == 0 {
+		return "None"
 	}
 	sort.Strings(keyValues)
 	return fmt.Sprintf("{ %s }", strings.Join(keyValues, ", "))

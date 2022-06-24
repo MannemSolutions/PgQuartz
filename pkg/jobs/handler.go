@@ -85,6 +85,7 @@ func (h *Handler) RunChecks() {
 	}
 	log.Info("Checking job results")
 	h.Config.Checks.Run(h.Config.Conns)
+	log.Info("Job finished successfully")
 }
 
 func (h *Handler) initRunners() {
@@ -98,16 +99,16 @@ func (h *Handler) initRunners() {
 func (h *Handler) newWork() (done bool) {
 	done = true
 	for _, name := range h.Steps.GetReadySteps() {
-		log.Infof("scheduling step %s", name)
+		log.Infof("Scheduling step %s", name)
 		if result, err := h.Steps.CheckWhen(*h, name); err != nil {
-			log.Errorf("error while checking step %s: %e", name, err)
+			log.Errorf("Error while checking step %s: %e", name, err)
 			h.Steps.setStepState(name, stepStateSkipped)
 		} else if result {
 			instances := h.Steps[name].GetInstances()
-			log.Debugf("scheduling %d instances for step %s", len(instances), name)
+			log.Debugf("Scheduling %d instances for step %s", len(instances), name)
 			for _, i := range instances {
 				instanceName := i.Name()
-				log.Debugf("scheduling instance [%s].[%s]", name, instanceName)
+				log.Debugf("Scheduling instance [%s].[%s]", name, instanceName)
 				h.ToDo <- Work{name, instanceName}
 			}
 			h.Steps.setStepState(name, stepStateScheduled)
