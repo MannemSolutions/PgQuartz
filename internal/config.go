@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
@@ -57,6 +58,10 @@ func NewConfig() (config jobs.Config, err error) {
 	}
 
 	err = yaml.Unmarshal(yamlConfig, &config)
+	config.Initialize()
+	if config.Workdir == "" {
+		config.Workdir = path.Dir(configFile)
+	}
 
 	if debug {
 		config.Debug = true
