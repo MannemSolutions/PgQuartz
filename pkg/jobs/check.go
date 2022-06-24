@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 )
 
@@ -62,7 +63,7 @@ func (c Check) String() string {
 	} else {
 		cmd = fmt.Sprintf("file: %s", c.File)
 	}
-	return fmt.Sprintf("name: %s, type: %s, command: %s", c.Name, c.Type, cmd)
+	return fmt.Sprintf("name: '%s', type: %s, command: %s", strings.Replace(c.Name, "'", "''", -1), c.Type, cmd)
 }
 
 func (c Check) VerifyScriptFile() (err error) {
@@ -188,9 +189,9 @@ func (c *Check) CleanTempFile() {
 
 func CheckOutput(stdOut Result, expected string, unexpected string) error {
 	stdout := NewResultFromString(stdOut.String())
-	if expected != "" && !stdout.RegExpContains(expected) {
+	if expected != "" && !stdout.Contains(expected) {
 		return fmt.Errorf("expected string (%s) not found", expected)
-	} else if unexpected != "" && stdout.RegExpContains(unexpected) {
+	} else if unexpected != "" && stdout.Contains(unexpected) {
 		return fmt.Errorf("unexpected string (%s) found", unexpected)
 	}
 	return nil
