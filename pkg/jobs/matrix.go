@@ -86,6 +86,7 @@ func (ias InstanceArguments) ParseQuery(query string) (parsedQuery string, args 
 	parsedQuery = query
 	// Loop the named args and replace with placeholders
 	for argName, argValue := range ias {
+		parsedQuery = strings.Replace(parsedQuery, fmt.Sprintf("${%s}", argName), argValue, -1)
 		if strings.Contains(parsedQuery, ":"+argName) {
 			parsedQuery = strings.ReplaceAll(parsedQuery, ":"+argName, fmt.Sprint(`$`, i))
 			args = append(args, argValue)
