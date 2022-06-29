@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"gopkg.in/yaml.v2"
@@ -59,8 +60,12 @@ func NewConfig() (config jobs.Config, err error) {
 
 	err = yaml.Unmarshal(yamlConfig, &config)
 	config.Initialize()
+	dir, fileName := path.Split(configFile)
 	if config.Workdir == "" {
-		config.Workdir = path.Dir(configFile)
+		config.Workdir = dir
+	}
+	if config.EtcdConfig.LockKey == "" {
+		config.EtcdConfig.LockKey = strings.TrimSuffix(fileName, filepath.Ext(fileName))
 	}
 
 	if debug {
