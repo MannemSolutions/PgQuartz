@@ -24,6 +24,7 @@ func initContext() {
 func main() {
 	var err error
 	initLogger()
+	defer log.Sync()
 	if config, err = internal.NewConfig(); err != nil {
 		log.Fatal(err)
 	} else {
