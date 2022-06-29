@@ -26,11 +26,9 @@ func NewHandler(c Config) Handler {
 
 func (h *Handler) VerifyConfig() {
 	log.Debug("This is my config:\n", h.Config.String())
-	if h.Config.Workdir != "" {
-		log.Debugf("Jumping to workdir %s", h.Config.Workdir)
-		if err := os.Chdir(h.Config.Workdir); err != nil {
-			log.Panicf("could not jump to dir %s", h.Config.Workdir)
-		}
+	log.Debugf("Jumping to workdir %s", h.Config.Workdir)
+	if err := os.Chdir(h.Config.Workdir); err != nil {
+		log.Panicf("could not jump to dir %s", h.Config.Workdir)
 	}
 	log.Info("Verifying config")
 	h.Config.Verify()
