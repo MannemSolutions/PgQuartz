@@ -28,7 +28,7 @@ func main() {
 		log.Fatal(err)
 	} else {
 		initLogger(config.LogFile)
-		defer log.Sync()
+		defer log.Sync() //nolint:errcheck
 		initRemoteLoggers()
 		enableDebug(config.Debug)
 		config.Initialize()
