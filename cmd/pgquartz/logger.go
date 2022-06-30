@@ -1,11 +1,11 @@
 package main
 
 import (
-	"os"
-
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"github.com/mannemsolutions/PgQuartz/pkg/pg"
+	"os"
+
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -15,7 +15,7 @@ var (
 	atom zap.AtomicLevel
 )
 
-func initLogger() {
+func initLogger(logFilePath string) {
 
 	atom = zap.NewAtomicLevel()
 	// First, define our level-handling logic.
@@ -40,12 +40,31 @@ func initLogger() {
 
 	// Join the outputs, encoders, and level-handling functions into
 	// zapcore.Cores, then tee the cores together.
-	core := zapcore.NewTee(
-		zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
-		zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
-	)
+	var core zapcore.Core
+	if logFilePath != "" {
+		fileEncoder := zapcore.NewConsoleEncoder(encoderCfg)
+		if logFile, err := os.OpenFile(logFilePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err != nil {
+			initLogger("")
+			log.Panicf("error while opening logfile: %s", err)
+		} else {
+			writer := zapcore.AddSync(logFile)
+			core = zapcore.NewTee(
+				zapcore.NewCore(fileEncoder, writer, atom),
+				zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
+				zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+			)
+		}
+	} else {
+		core = zapcore.NewTee(
+			zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
+			zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
+		)
+	}
 
 	log = zap.New(core).Sugar()
+}
+
+func initRemoteLoggers() {
 	jobs.InitLogger(log, atom)
 	pg.InitLogger(log)
 	etcd.InitLogger(log)
