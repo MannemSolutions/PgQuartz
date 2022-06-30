@@ -36,6 +36,13 @@ func main() {
 		defer locker.Close()
 		h := jobs.NewHandler(config)
 		h.VerifyConfig()
+		if err = h.VerifyRoles(); err == pg.UnexpctedRole {
+			log.Infof("%s", err)
+			locker.Close()
+			return
+		} else if err != nil {
+			log.Panicf("error during role verification: %e", err)
+		}
 		h.RunSteps()
 		locker.Close()
 		h.RunChecks()

@@ -193,7 +193,7 @@ func (c *Command) Run(conns Connections, args InstanceArguments) (err error) {
 	}
 	if body, err := c.ScriptBody(); err != nil {
 		return err
-	} else if c.stdOut, err = conns.Execute(c.Type, body, c.BatchMode, args); err != nil {
+	} else if c.stdOut, err = conns.Execute(c.Type, true, body, c.BatchMode, args); err != nil {
 		c.Rc = 1
 		return err
 	}

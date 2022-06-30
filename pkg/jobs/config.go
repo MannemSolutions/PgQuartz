@@ -10,17 +10,18 @@ import (
 )
 
 type Config struct {
-	Steps      Steps       `yaml:"steps"`
-	Checks     Checks      `yaml:"checks"`
-	Target     Target      `yaml:"target"`
-	Conns      Connections `yaml:"connections"`
-	Alert      []Alert     `yaml:"alerts"`
-	Log        []Log       `yaml:"log"`
-	Debug      bool        `yaml:"debug"`
-	Parallel   int         `yaml:"parallel"`
-	Workdir    string      `yaml:"workdir"`
-	EtcdConfig etcd.Config `yaml:"etcdConfig"`
-	Timeout    string      `yaml:"timeout"`
+	Steps          Steps       `yaml:"steps"`
+	Checks         Checks      `yaml:"checks"`
+	Target         Target      `yaml:"target"`
+	Conns          Connections `yaml:"connections"`
+	Alert          []Alert     `yaml:"alerts"`
+	Log            []Log       `yaml:"log"`
+	Debug          bool        `yaml:"debug"`
+	RunOnRoleError bool        `yaml:"runOnRoleError"`
+	Parallel       int         `yaml:"parallel"`
+	Workdir        string      `yaml:"workdir"`
+	EtcdConfig     etcd.Config `yaml:"etcdConfig"`
+	Timeout        string      `yaml:"timeout"`
 }
 
 func (c Config) String() string {
