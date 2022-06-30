@@ -18,6 +18,7 @@ type Config struct {
 	Log            []Log       `yaml:"log"`
 	Debug          bool        `yaml:"debug"`
 	RunOnRoleError bool        `yaml:"runOnRoleError"`
+	LogFile        string      `yaml:"logFile"`
 	Parallel       int         `yaml:"parallel"`
 	Workdir        string      `yaml:"workdir"`
 	EtcdConfig     etcd.Config `yaml:"etcdConfig"`

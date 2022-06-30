@@ -23,11 +23,13 @@ func initContext() {
 
 func main() {
 	var err error
-	initLogger()
-	defer log.Sync()
 	if config, err = internal.NewConfig(); err != nil {
+		initLogger("")
 		log.Fatal(err)
 	} else {
+		initLogger(config.LogFile)
+		defer log.Sync()
+		initRemoteLoggers()
 		enableDebug(config.Debug)
 		config.Initialize()
 		initContext()
