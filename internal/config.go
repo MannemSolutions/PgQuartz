@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"gopkg.in/yaml.v2"
@@ -24,9 +25,7 @@ const (
 
 func NewConfig() (config jobs.Config, err error) {
 	var debug bool
-
 	var version bool
-
 	var configFile string
 
 	flag.BoolVar(&debug, "d", false, "Add debugging output")
@@ -61,11 +60,21 @@ func NewConfig() (config jobs.Config, err error) {
 	err = yaml.Unmarshal(yamlConfig, &config)
 	config.Initialize()
 	dir, fileName := path.Split(configFile)
+	jobName := strings.TrimSuffix(fileName, filepath.Ext(fileName))
 	if config.Workdir == "" {
 		config.Workdir = dir
 	}
+
+	if fileInfo, err := os.Stat(config.LogFile); err != nil {
+		return config, err
+	} else if fileInfo.IsDir() {
+		// is a directory
+		t := time.Now()
+		logFileName := fmt.Sprintf("%s_%s.log", t.Format("2006-01-02"), jobName)
+		config.LogFile = filepath.Join(config.LogFile, logFileName)
+	}
 	if config.EtcdConfig.LockKey == "" {
-		config.EtcdConfig.LockKey = strings.TrimSuffix(fileName, filepath.Ext(fileName))
+		config.EtcdConfig.LockKey = jobName
 	}
 
 	if debug {
