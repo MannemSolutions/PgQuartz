@@ -65,7 +65,9 @@ func NewConfig() (config jobs.Config, err error) {
 		config.Workdir = dir
 	}
 
-	if fileInfo, err := os.Stat(config.LogFile); err != nil {
+	if config.LogFile == "" {
+		// If it is emptystring, then don't do fancy stuff with stat on it
+	} else if fileInfo, err := os.Stat(config.LogFile); err != nil {
 		return config, err
 	} else if fileInfo.IsDir() {
 		// is a directory
