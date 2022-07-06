@@ -213,7 +213,7 @@ func (c *Check) RunOsCheck(args InstanceArguments) (err error) {
 		case *exec.ExitError:
 			rc := typedErr.ExitCode()
 			if rc != c.Rc {
-				return fmt.Errorf("unexecpected returncode (expected=%d, actual = %d)", c.Rc, rc)
+				return fmt.Errorf("unexpected returncode (expected=%d, actual = %d)", c.Rc, rc)
 			}
 		default:
 		}
