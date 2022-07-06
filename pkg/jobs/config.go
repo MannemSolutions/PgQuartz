@@ -3,12 +3,12 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
+	"github.com/mitchellh/go-homedir"
 	"gopkg.in/yaml.v2"
 )
 
