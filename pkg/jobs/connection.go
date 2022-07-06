@@ -24,6 +24,7 @@ func (cs Connections) Execute(connName string, role string, query string, batchM
 		for _, qry := range strings.Split(query, ";") {
 			numberedArgsQuery, numberedArgs := args.ParseQuery(qry)
 			if response, err = c.GetAll(numberedArgsQuery, numberedArgs...); err != nil {
+				log.Debugf("error occurred on query %s (%s): %s", qry, args.String(), err.Error())
 				return nil, err
 			} else {
 				result = result.Append(NewResult(response.AsStringArray()))
@@ -33,6 +34,7 @@ func (cs Connections) Execute(connName string, role string, query string, batchM
 	} else {
 		numberedArgsQuery, numberedArgs := args.ParseQuery(query)
 		if response, err = c.GetAll(numberedArgsQuery, numberedArgs...); err != nil {
+			log.Debugf("error occurred on query %s (%s): %s", query, args.String(), err.Error())
 			return nil, err
 		} else {
 			return NewResult(response.AsStringArray()), nil
