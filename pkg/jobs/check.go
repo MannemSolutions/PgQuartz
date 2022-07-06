@@ -36,6 +36,7 @@ type Check struct {
 	// Home (~) is not resolved
 	File       string     `yaml:"file,omitempty"`
 	Name       string     `yaml:"name"`
+	Role       string     `yaml:"role"`
 	Type       string     `yaml:"type"`
 	Inline     string     `yaml:"inline,omitempty"`
 	BatchMode  bool       `yaml:"batchMode"`
@@ -49,6 +50,7 @@ type Check struct {
 func (c Check) Clone() *Check {
 	return &Check{
 		Name:       c.Name,
+		Role:       c.Role,
 		Type:       c.Type,
 		Inline:     c.Inline,
 		File:       c.File,
@@ -171,7 +173,7 @@ func (c *Check) Run(conns Connections, args InstanceArguments) error {
 	}
 	if body, err := c.ScriptBody(); err != nil {
 		return err
-	} else if stdOut, err := conns.Execute(c.Type, false, body, c.BatchMode, args); err != nil && c.Rc == 0 {
+	} else if stdOut, err := conns.Execute(c.Type, c.Role, body, c.BatchMode, args); err != nil && c.Rc == 0 {
 		return fmt.Errorf("%s unexpectedly generated an error: %e", c.String(), err)
 	} else if err == nil && c.Rc != 0 {
 		return fmt.Errorf("%s unexpectedly ran without error", c.String())

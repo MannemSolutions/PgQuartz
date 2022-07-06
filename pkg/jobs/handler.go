@@ -40,7 +40,7 @@ func (h Handler) VerifyRoles() error {
 		return nil
 	}
 	for _, con := range h.Config.Conns {
-		if err := con.VerifyRole(); err != nil {
+		if err := con.VerifyRole(""); err != nil {
 			return err
 		}
 	}

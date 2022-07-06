@@ -150,19 +150,22 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 	return answer, nil
 }
 
-func (c *Conn) VerifyRole() error {
-	if c.Role == "all" {
+func (c *Conn) VerifyRole(expected string) error {
+	if expected == "" {
+		expected = c.Role
+	}
+	if expected == "all" {
 		return nil
 	}
-	if _, ok := ValidRoles[c.Role]; !ok {
+	if _, ok := ValidRoles[expected]; !ok {
 		return fmt.Errorf("invalid role was specified for conn %s", c.ConnParams.String(true))
 	}
 	if role, err := c.GetOneField("select case pg_is_in_recovery() when true then 'standby' else 'primary' end"); err != nil {
 		return err
-	} else if role != c.Role {
-		log.Debugf("actual role %s != expected role %s", role, c.Role)
+	} else if role != expected {
+		log.Debugf("actual role %s != expected role %s", role, expected)
 		return UnexpctedRole
 	}
-	log.Debugf("actual role is as expected %s", c.Role)
+	log.Debugf("actual role is as expected %s", expected)
 	return nil
 }
