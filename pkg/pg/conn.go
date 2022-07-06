@@ -151,6 +151,9 @@ func (c *Conn) GetAll(query string, args ...interface{}) (answer Result, err err
 }
 
 func (c *Conn) VerifyRole() error {
+	if c.Role == "all" {
+		return nil
+	}
 	if _, ok := ValidRoles[c.Role]; !ok {
 		return fmt.Errorf("invalid role was specified for conn %s", c.ConnParams.String(true))
 	}
