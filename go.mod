@@ -4,7 +4,11 @@ go 1.17
 
 require (
 	github.com/coreos/etcd v3.3.27+incompatible
+	github.com/go-git/go-git/v5 v5.4.2
+	github.com/google/martian v2.1.0+incompatible
 	github.com/jackc/pgx/v4 v4.15.0
+	github.com/mitchellh/go-homedir v1.1.0
+	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.21.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -17,12 +21,12 @@ require (
 	github.com/coreos/go-semver v0.3.0 // indirect
 	github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f // indirect
 	github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible // indirect
 	github.com/dustin/go-humanize v1.0.0 // indirect
 	github.com/emirpasic/gods v1.12.0 // indirect
 	github.com/go-git/gcfg v1.5.0 // indirect
 	github.com/go-git/go-billy/v5 v5.3.1 // indirect
-	github.com/go-git/go-git/v5 v5.4.2 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -43,8 +47,7 @@ require (
 	github.com/jonboulle/clockwork v0.3.0 // indirect
 	github.com/kevinburke/ssh_config v0.0.0-20201106050909-4977a11b4351 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/prometheus/client_golang v1.12.2 // indirect
 	github.com/rogpeppe/go-internal v1.8.1 // indirect
 	github.com/sergi/go-diff v1.1.0 // indirect
@@ -62,8 +65,8 @@ require (
 	google.golang.org/genproto v0.0.0-20200825200019-8632dd797987 // indirect
 	google.golang.org/grpc v1.47.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
+	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 

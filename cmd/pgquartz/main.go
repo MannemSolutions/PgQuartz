@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"github.com/go-git/go-git/v5"
+
 	"github.com/mannemsolutions/PgQuartz/internal"
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
+	"github.com/mannemsolutions/PgQuartz/pkg/git"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"github.com/mannemsolutions/PgQuartz/pkg/pg"
 )
@@ -35,10 +36,17 @@ func main() {
 		if config.Git.Disable {
 			log.Debug("Git pull functionality is disabled")
 		} else {
-			if err = pullCurDir(config.Workdir, config.Git); err == git.ErrRepositoryNotExists {
+			if err = git.PullCurDir(config.Workdir, config.Git); err == git.ErrRepositoryNotExists {
 				log.Debugf("could not find a valid repo at %s", config.Workdir)
+			} else if err == git.NoErrAlreadyUpToDate {
+				log.Debugf("repo %s already up to date", config.Workdir)
 			} else if err != nil {
 				log.Infof("error while pulling git repo %s: %e", config.Workdir, err)
+			} else {
+				log.Debugf("git repo at %s updated, reapplying config", config.Workdir)
+				if config, err = internal.NewConfig(); err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 		initContext()

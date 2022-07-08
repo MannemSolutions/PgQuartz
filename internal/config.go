@@ -23,10 +23,16 @@ const (
 	defaultConfFile = "/etc/pgquartz/config.yaml"
 )
 
-func NewConfig() (config jobs.Config, err error) {
-	var debug bool
-	var version bool
-	var configFile string
+var (
+	debug      bool
+	version    bool
+	configFile string
+)
+
+func ProcessFlags() (err error) {
+	if configFile != "" {
+		return
+	}
 
 	flag.BoolVar(&debug, "d", false, "Add debugging output")
 	flag.BoolVar(&version, "v", false, "Show version information")
@@ -46,8 +52,12 @@ func NewConfig() (config jobs.Config, err error) {
 	}
 
 	configFile, err = filepath.EvalSymlinks(configFile)
-	if err != nil {
-		return config, err
+	return err
+}
+
+func NewConfig() (config jobs.Config, err error) {
+	if err = ProcessFlags(); err != nil {
+		return
 	}
 
 	// This only parsed as yaml, nothing else

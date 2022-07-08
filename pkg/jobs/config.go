@@ -25,7 +25,7 @@ func (gc *GitConfig) Initialize() {
 		gc.Remote = "origin"
 	}
 	if gc.RsaPath == "" {
-		gc.RsaPath = "~/.ssh.id_rsa"
+		gc.RsaPath = "~/.ssh/id_rsa"
 	}
 	if strings.HasPrefix(gc.RsaPath, "~/") {
 		if home, err := homedir.Dir(); err != nil {
