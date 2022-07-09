@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-#docker-compose down --remove-orphans #&& docker rmi pgquartz_builder pgquartz_stolon || echo new or partial install
+docker-compose down --remove-orphans #&& docker rmi pgquartz_builder pgquartz_stolon || echo new or partial install
 docker-compose up -d --scale stolon=3
 docker exec pgquartz_builder_1 /bin/bash -ic 'cd /host && make build_dlv build_pgquartz'
 

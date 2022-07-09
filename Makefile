@@ -15,10 +15,13 @@ build_dlv:
 # alias make='/usr/bin/arch -arch arm64 /usr/bin/make'
 debug:
 	go build -gcflags "all=-N -l" -o ./bin/pgquartz.debug.$(uname_p) ./cmd/pgquartz
-	~/go/bin/dlv --headless --listen=:2345 --api-version=2 --accept-multiclient exec ./bin/pgquartz.debug.$(uname_p) -- -c jobs/jobspec1/job.yml
+	~/go/bin/dlv --headless --listen=:2345 --api-version=2 --accept-multiclient exec ./bin/pgquartz.debug.$(uname_p) -- -c jobs/jobspec1/job_mac.yml
+
+debug_test:
+	~/go/bin/dlv --headless --listen=:2345 --api-version=2 --accept-multiclient test ./pkg/git/
 
 run:
-	./bin/pgquartz.$(uname_p) -c jobs/jobspec1/job.yml
+	./bin/pgquartz.$(uname_p) -c jobs/jobspec1/job_mac.yml
 
 fmt:
 	gofmt -w .
