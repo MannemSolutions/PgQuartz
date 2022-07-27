@@ -238,7 +238,7 @@ func (s Step) StdErr() Result {
 }
 
 func (s Step) Rc() int {
-	return s.Commands.Rc()
+	return s.Instances.Rc()
 }
 
 func (s *Step) Initialize() {
