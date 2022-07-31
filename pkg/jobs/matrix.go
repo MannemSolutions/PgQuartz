@@ -124,7 +124,7 @@ func (mas MatrixArgs) Instances() (ias []InstanceArguments) {
 		}
 	}
 	if len(ias) == 0 {
-		ias = append(ias, InstanceArguments{"": ""})
+		ias = append(ias, InstanceArguments{})
 	}
 	return ias
 }
