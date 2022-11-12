@@ -2,7 +2,7 @@ package git
 
 import (
 	"github.com/go-git/go-git/v5/plumbing"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/go-git/go-git/v5"
@@ -37,7 +37,7 @@ func getGitAuth(remoteUrls []string, config jobs.GitConfig) (transport.AuthMetho
 					}, nil
 				}
 			} else if url.protocol == "ssh" || url.protocol == "git" {
-				if sshKey, err := ioutil.ReadFile(config.RsaPath); err != nil {
+				if sshKey, err := os.ReadFile(config.RsaPath); err != nil {
 					return nil, err
 				} else {
 					return ssh.NewPublicKeys("git", []byte(sshKey), "")
