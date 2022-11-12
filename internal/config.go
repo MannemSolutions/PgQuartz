@@ -3,7 +3,6 @@ package internal
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -62,7 +61,7 @@ func NewConfig() (config jobs.Config, err error) {
 
 	// This only parsed as yaml, nothing else
 	// #nosec
-	yamlConfig, err := ioutil.ReadFile(configFile)
+	yamlConfig, err := os.ReadFile(configFile)
 	if err != nil {
 		return config, err
 	}

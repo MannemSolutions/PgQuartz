@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -128,7 +127,7 @@ func (c *Check) ScriptFile() (scriptFile string) {
 	var err error
 	var tmpFile *os.File
 	if c.Inline != "" {
-		if tmpFile, err = ioutil.TempFile("", "pgQuartsInlineCheck"); err != nil {
+		if tmpFile, err = os.CreateTemp("", "pgQuartsInlineCheck"); err != nil {
 			log.Panicf("error creating tempfile: %e", err)
 		}
 		c.tmpFile = tmpFile.Name()
