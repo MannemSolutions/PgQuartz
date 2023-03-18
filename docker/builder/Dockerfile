@@ -1,5 +1,5 @@
 FROM rockylinux:8
-ENV GOVER=1.18.2
+ENV GOVER=1.20.2
 
 RUN dnf update -y && \
     dnf groupinstall -y "Development Tools" && \
