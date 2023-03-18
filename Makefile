@@ -6,7 +6,7 @@ build: build_pgquartz
 
 build_pgquartz:
 	./set_version.sh
-	go mod tidy
+	go mod tidy -compat=1.17
 	go build -o ./bin/pgquartz.$(uname_p) ./cmd/pgquartz
 
 build_dlv:
