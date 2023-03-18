@@ -89,7 +89,6 @@ func (h *Handler) initRunners() {
 }
 
 func (h *Handler) newWork() (done bool) {
-	done = true
 	for _, name := range h.Steps.GetReadySteps() {
 		log.Infof("Scheduling step %s", name)
 		if result, err := h.Steps.CheckWhen(*h, name); err != nil {
