@@ -36,7 +36,7 @@ func main() {
 		if config.Git.Disable {
 			log.Debug("Git pull functionality is disabled")
 		} else {
-			if err = git.PullCurDir(config.Workdir, config.Git); err == git.ErrRepositoryNotExists {
+			if err = config.Git.PullCurDir(config.Workdir); err == git.ErrRepositoryNotExists {
 				log.Debugf("could not find a valid repo at %s", config.Workdir)
 			} else if err == git.NoErrAlreadyUpToDate {
 				log.Debugf("repo %s already up to date", config.Workdir)
