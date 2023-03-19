@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/mannemsolutions/PgQuartz/pkg/git"
 	"os"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
@@ -67,8 +68,9 @@ func initLogger(logFilePath string) {
 
 func initRemoteLoggers() {
 	jobs.InitLogger(log, atom)
-	pg.InitLogger(log)
+	git.InitLogger(log)
 	etcd.InitLogger(log)
+	pg.InitLogger(log)
 }
 
 func enableDebug(debug bool) {

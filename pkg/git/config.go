@@ -1,35 +1,36 @@
 package git
 
 import (
+	"bytes"
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/go-git/go-git/v5/plumbing"
-	"github.com/go-git/go-git/v5/plumbing/transport"
-	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/go-git/go-git/v5/plumbing/transport/ssh"
 	"github.com/mitchellh/go-homedir"
+	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
-
-	"github.com/google/martian/log"
 )
 
-var (
-	// ErrRepositoryNotExists is reexported, so we can handle this error differently from caller without importing go-git there
-	ErrRepositoryNotExists = git.ErrRepositoryNotExists
-	NoErrAlreadyUpToDate   = git.NoErrAlreadyUpToDate
+const (
+	LF byte = 10
 )
 
 type Config struct {
+	Path         string `yaml:"dir"`
+	URL          string `yaml:"url"`
 	Remote       string `yaml:"remote"`
+	Revision     string `yaml:"revision"`
 	RsaPath      string `yaml:"rsaPath"`
 	HttpUser     string `yaml:"httpUser"`
 	HttpPassword string `yaml:"httpPassword"`
 	Disable      bool   `yaml:"disable"`
 }
 
-func (gc *Config) Initialize() {
+// Initialize the git config with defaults
+func (gc *Config) Initialize(workdir string) {
+	if gc.Path == "" {
+		gc.Path = workdir
+	}
 	if gc.Remote == "" {
 		gc.Remote = "origin"
 	}
@@ -45,64 +46,91 @@ func (gc *Config) Initialize() {
 	}
 }
 
-func (gc Config) getGitAuth(remoteUrls []string) (transport.AuthMethod, error) {
-	if urls, err := newGitUrls(remoteUrls); err != nil {
-		return nil, err
-	} else {
-		for _, url := range urls {
-			if strings.HasPrefix(url.protocol, "http") {
-				if gc.HttpUser != "" {
-					return &http.BasicAuth{
-						Username: gc.HttpUser,
-						Password: gc.HttpPassword,
-					}, nil
-				} else {
-					return &http.BasicAuth{
-						Username: url.user,
-						Password: url.password,
-					}, nil
-				}
-			} else if url.protocol == "ssh" || url.protocol == "git" {
-				if sshKey, err := os.ReadFile(gc.RsaPath); err != nil {
-					return nil, err
-				} else {
-					return ssh.NewPublicKeys("git", []byte(sshKey), "")
-				}
-			}
-		}
+func (gc Config) GetBranchName() (string, error) {
+	if !gc.IsGitRepo() {
+		return "", fmt.Errorf("folder %s is not a git repo", gc.Path)
 	}
-	return nil, invalidGitUrlFormat
+	var stdOut bytes.Buffer
+	exCommand := exec.Command("git", "branch", "--show-current")
+	exCommand.Stdout = io.MultiWriter(&stdOut)
+	exCommand.Dir = gc.Path
+	if err := exCommand.Run(); err != nil {
+		for _, line := range strings.Split(stdOut.String(), "\n") {
+			log.Info(line)
+		}
+		return "", err
+	} else {
+		return stdOut.String(), nil
+	}
 }
 
-func (gc Config) PullCurDir(workDir string) (err error) {
-	var repo *git.Repository
-	var workTree *git.Worktree
-	var remote *git.Remote
-	var auth transport.AuthMethod
-	var ref *plumbing.Reference
-	var updated bool
-	if repo, err = git.PlainOpenWithOptions(workDir, &git.PlainOpenOptions{DetectDotGit: true}); err != nil {
-		return
-	} else if workTree, err = repo.Worktree(); err != nil {
-		return
-	} else if remote, err = repo.Remote(gc.Remote); err != nil {
-		return
-	} else if auth, err = gc.getGitAuth(remote.Config().URLs); err != nil {
-		return
-	} else if err = workTree.Pull(&git.PullOptions{RemoteName: gc.Remote, Auth: auth}); err == git.NoErrAlreadyUpToDate {
-		// no updates, which is fine
-	} else if err != nil {
-		return
+func (gc Config) RunGitCommand(command []string) error {
+	exCommand := exec.Command("git", command...)
+	exCommand.Dir = gc.Path
+	if err := exCommand.Run(); err != nil {
+		return err
 	} else {
-		updated = true
+		return nil
 	}
-	ref, err = repo.Head()
-	if err != nil {
-		return
+}
+
+func (gc Config) Checkout() error {
+	log.Debug("git checkout")
+	if name, err := gc.GetBranchName(); err != nil {
+		return err
+	} else if name == gc.Revision {
+		log.Debugf("Already at revision %s", name)
+		return nil
+	} else if err = gc.RunGitCommand([]string{"checkout", gc.Revision}); err != nil {
+		return nil
+	} else if name, err = gc.GetBranchName(); err != nil {
+		return err
+	} else if name != gc.Revision {
+		return fmt.Errorf("revision (%s) not as expected (%s) after checkout", name, gc.Revision)
 	}
-	log.Infof("running with branch %s (commit %s)", ref.Name(), ref.Hash())
-	if !updated {
-		return NoErrAlreadyUpToDate
+	return nil
+}
+
+func (gc Config) Clean() error {
+	if err := gc.RunGitCommand([]string{"clean"}); err != nil {
+		return err
 	}
-	return
+	if err := gc.RunGitCommand([]string{"restore", "--staged", "."}); err != nil {
+		return err
+	}
+	if err := gc.RunGitCommand([]string{"restore", "."}); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (gc Config) Clone() error {
+	if prepared, err := gc.IsPrepared(); err != nil {
+		return err
+	} else if prepared {
+		log.Debug("Repo already is cloned, pulling instead")
+		return gc.Pull()
+	}
+
+	if gc.Exists()
+	os.MkdirAll(, os.ModePerm)
+	// We need to create the folder!!!
+
+	if err := gc.RunGitCommand([]string{"clone", "-o", gc.Remote, gc.URL, gc.Path}); err != nil {
+		return err
+	}
+	return gc.Checkout()
+}
+
+func (gc Config) Pull() error {
+	if gc.Disable {
+		return fmt.Errorf("git pull functionality is disabled")
+	}
+	if err := gc.Clean(); err != nil {
+		return err
+	}
+	if err := gc.Checkout(); err != nil {
+		return err
+	}
+	return gc.RunGitCommand([]string{"pull"})
 }
