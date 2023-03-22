@@ -33,9 +33,11 @@ fmt:
 compose:
 	./docker-compose-tests.sh
 
-test: sec lint
+test: gotest sec lint
 
 sec:
 	gosec ./...
 lint:
 	golangci-lint run
+gotest:
+	go test -v ./...

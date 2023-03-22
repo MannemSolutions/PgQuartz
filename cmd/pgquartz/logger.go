@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/mannemsolutions/PgQuartz/pkg/git"
 	"os"
+
+	"github.com/mannemsolutions/PgQuartz/pkg/git"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"

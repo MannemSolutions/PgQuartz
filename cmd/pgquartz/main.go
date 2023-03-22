@@ -5,7 +5,6 @@ import (
 
 	"github.com/mannemsolutions/PgQuartz/internal"
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
-	"github.com/mannemsolutions/PgQuartz/pkg/git"
 	"github.com/mannemsolutions/PgQuartz/pkg/jobs"
 	"github.com/mannemsolutions/PgQuartz/pkg/pg"
 )
@@ -33,20 +32,12 @@ func main() {
 		enableDebug(config.Debug)
 		config.Initialize()
 		defer log.Sync() //nolint:errcheck
-		if config.Git.Disable {
-			log.Debug("Git pull functionality is disabled")
+		if err = config.Git.Pull(); err != nil {
+			log.Infof("error while pulling git repo %s: %e", config.Workdir, err)
 		} else {
-			if err = config.Git.Pull(); err == git.ErrRepositoryNotExists {
-				log.Debugf("could not find a valid repo at %s", config.Workdir)
-			} else if err == git.NoErrAlreadyUpToDate {
-				log.Debugf("repo %s already up to date", config.Workdir)
-			} else if err != nil {
-				log.Infof("error while pulling git repo %s: %e", config.Workdir, err)
-			} else {
-				log.Debugf("git repo at %s updated, reapplying config", config.Workdir)
-				if config, err = internal.NewConfig(); err != nil {
-					log.Fatal(err)
-				}
+			log.Debugf("git repo at %s updated, reapplying config", config.Workdir)
+			if config, err = internal.NewConfig(); err != nil {
+				log.Fatal(err)
 			}
 		}
 		initContext()

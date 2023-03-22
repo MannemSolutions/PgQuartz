@@ -1,14 +1,12 @@
 package git
 
 import (
-	"bytes"
 	"fmt"
-	"github.com/mitchellh/go-homedir"
-	"io"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/mitchellh/go-homedir"
 )
 
 const (
@@ -16,23 +14,26 @@ const (
 )
 
 type Config struct {
-	Path         string `yaml:"dir"`
-	URL          string `yaml:"url"`
-	Remote       string `yaml:"remote"`
-	Revision     string `yaml:"revision"`
-	RsaPath      string `yaml:"rsaPath"`
-	HttpUser     string `yaml:"httpUser"`
-	HttpPassword string `yaml:"httpPassword"`
-	Disable      bool   `yaml:"disable"`
+	Path         GitFolder `yaml:"dir"`
+	URL          string    `yaml:"url"`
+	Remote       string    `yaml:"remote"`
+	Revision     string    `yaml:"revision"`
+	RsaPath      string    `yaml:"rsaPath"`
+	HttpUser     string    `yaml:"httpUser"`
+	HttpPassword string    `yaml:"httpPassword"`
+	Disable      bool      `yaml:"disable"`
 }
 
 // Initialize the git config with defaults
 func (gc *Config) Initialize(workdir string) {
 	if gc.Path == "" {
-		gc.Path = workdir
+		gc.Path = GitFolder(workdir)
 	}
 	if gc.Remote == "" {
 		gc.Remote = "origin"
+	}
+	if gc.Revision == "" {
+		gc.Revision = "main"
 	}
 	if gc.RsaPath == "" {
 		gc.RsaPath = "~/.ssh/id_rsa"
@@ -46,80 +47,67 @@ func (gc *Config) Initialize(workdir string) {
 	}
 }
 
-func (gc Config) GetBranchName() (string, error) {
-	if !gc.IsGitRepo() {
-		return "", fmt.Errorf("folder %s is not a git repo", gc.Path)
+func (gc *Config) Checkout(revision string) error {
+	if gc.Disable {
+		return fmt.Errorf("git pull functionality is disabled")
 	}
-	var stdOut bytes.Buffer
-	exCommand := exec.Command("git", "branch", "--show-current")
-	exCommand.Stdout = io.MultiWriter(&stdOut)
-	exCommand.Dir = gc.Path
-	if err := exCommand.Run(); err != nil {
-		for _, line := range strings.Split(stdOut.String(), "\n") {
-			log.Info(line)
-		}
-		return "", err
-	} else {
-		return stdOut.String(), nil
-	}
-}
-
-func (gc Config) RunGitCommand(command []string) error {
-	exCommand := exec.Command("git", command...)
-	exCommand.Dir = gc.Path
-	if err := exCommand.Run(); err != nil {
-		return err
-	} else {
-		return nil
-	}
-}
-
-func (gc Config) Checkout() error {
 	log.Debug("git checkout")
-	if name, err := gc.GetBranchName(); err != nil {
-		return err
-	} else if name == gc.Revision {
-		log.Debugf("Already at revision %s", name)
+	currentCommit := gc.Path.GetCommit("HEAD")
+	log.Debugf("HEAD: %s", currentCommit)
+	wantedCommit := gc.Path.GetCommit(revision)
+	log.Debugf("Wanted: %s", wantedCommit)
+
+	if currentCommit == wantedCommit {
+		log.Debugf("Already at revision %s", revision)
+		gc.Revision = revision
 		return nil
-	} else if err = gc.RunGitCommand([]string{"checkout", gc.Revision}); err != nil {
-		return nil
-	} else if name, err = gc.GetBranchName(); err != nil {
+	} else if wantedCommit == "" {
+		return fmt.Errorf("revision (%s) is not found in this repo", revision)
+	} else if err := gc.Path.RunGitCommand([]string{"checkout", revision}); err != nil {
 		return err
-	} else if name != gc.Revision {
-		return fmt.Errorf("revision (%s) not as expected (%s) after checkout", name, gc.Revision)
+	} else if gc.Path.GetCommit("HEAD") != wantedCommit {
+		return fmt.Errorf("revision (%s => %s) not as expected (%s) after checkout", gc.Revision, wantedCommit, currentCommit)
 	}
+	gc.Revision = revision
 	return nil
 }
 
 func (gc Config) Clean() error {
-	if err := gc.RunGitCommand([]string{"clean"}); err != nil {
+	if err := gc.Path.RunGitCommand([]string{"clean", "-f"}); err != nil {
 		return err
 	}
-	if err := gc.RunGitCommand([]string{"restore", "--staged", "."}); err != nil {
+	if err := gc.Path.RunGitCommand([]string{"restore", "--staged", "."}); err != nil {
 		return err
 	}
-	if err := gc.RunGitCommand([]string{"restore", "."}); err != nil {
+	if err := gc.Path.RunGitCommand([]string{"restore", "."}); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (gc Config) Clone() error {
-	if prepared, err := gc.IsPrepared(); err != nil {
-		return err
-	} else if prepared {
+	if gc.Disable {
+		return fmt.Errorf("git pull functionality is disabled")
+	}
+	if gc.Path.IsPrepared() {
 		log.Debug("Repo already is cloned, pulling instead")
 		return gc.Pull()
 	}
 
-	if gc.Exists()
-	os.MkdirAll(, os.ModePerm)
-	// We need to create the folder!!!
+	if exists, err := gc.Path.Exists(); err != nil {
+		log.Debug("Repo %s is not a git repo, error getting more info", gc.Path)
+		return err
+	} else if !exists {
+		log.Debug("iCreating repo folder %s", gc.Path)
+		os.MkdirAll(string(gc.Path), os.ModePerm)
+		// We need to create the folder!!!
+	}
 
-	if err := gc.RunGitCommand([]string{"clone", "-o", gc.Remote, gc.URL, gc.Path}); err != nil {
+	log.Debug("Running git clone for %s", gc.Path)
+	if err := gc.Path.RunGitCommand([]string{"clone", "-o", gc.Remote, gc.URL, string(gc.Path)}); err != nil {
 		return err
 	}
-	return gc.Checkout()
+	return gc.Checkout(gc.Revision)
 }
 
 func (gc Config) Pull() error {
@@ -129,8 +117,8 @@ func (gc Config) Pull() error {
 	if err := gc.Clean(); err != nil {
 		return err
 	}
-	if err := gc.Checkout(); err != nil {
+	if err := gc.Checkout(gc.Revision); err != nil {
 		return err
 	}
-	return gc.RunGitCommand([]string{"pull"})
+	return gc.Path.RunGitCommand([]string{"pull"})
 }
