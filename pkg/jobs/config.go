@@ -57,7 +57,7 @@ func (c Config) Verify() {
 }
 
 func (c *Config) Initialize() {
-	c.Git.Initialize(c.Workdir)
+	c.Git.Initialize(git.Folder(c.Workdir))
 	c.Steps.Initialize()
 }
 

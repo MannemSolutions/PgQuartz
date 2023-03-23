@@ -14,20 +14,20 @@ const (
 )
 
 type Config struct {
-	Path         GitFolder `yaml:"dir"`
-	URL          string    `yaml:"url"`
-	Remote       string    `yaml:"remote"`
-	Revision     string    `yaml:"revision"`
-	RsaPath      string    `yaml:"rsaPath"`
-	HttpUser     string    `yaml:"httpUser"`
-	HttpPassword string    `yaml:"httpPassword"`
-	Disable      bool      `yaml:"disable"`
+	Path         Folder `yaml:"dir"`
+	URL          string `yaml:"url"`
+	Remote       string `yaml:"remote"`
+	Revision     string `yaml:"revision"`
+	RsaPath      string `yaml:"rsaPath"`
+	HttpUser     string `yaml:"httpUser"`
+	HttpPassword string `yaml:"httpPassword"`
+	Disable      bool   `yaml:"disable"`
 }
 
 // Initialize the git config with defaults
-func (gc *Config) Initialize(workdir string) {
+func (gc *Config) Initialize(workdir Folder) {
 	if gc.Path == "" {
-		gc.Path = GitFolder(workdir)
+		gc.Path = workdir
 	}
 	if gc.Remote == "" {
 		gc.Remote = "origin"

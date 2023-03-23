@@ -2,7 +2,6 @@ package git
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 	"regexp"
 	"testing"
@@ -13,19 +12,13 @@ import (
 )
 
 const (
-	StartRevision   = "v0.5.1"
+	StartRevision   = "tag3"
 	InvalidRevision = "invalid_revision"
-	EarlierRevision = "v0.5"
-	LaterRevision   = "main"
+	EarlierRevision = "tag2"
+	LaterRevision   = "tag4"
 	URL             = "https://github.com/MannemSolutions/PgQuartz.git"
 	Remote          = "pgquartz"
 )
-
-func TestMain(m *testing.M) {
-	exitcode := m.Run()
-	log.Sync()
-	os.Exit(exitcode)
-}
 
 func TestConfig_Initialize(t *testing.T) {
 	log = zaptest.NewLogger(t).Sugar()
@@ -48,13 +41,11 @@ func TestConfig_Initialize(t *testing.T) {
 
 func TestCloneCurDir(t *testing.T) {
 	log = zaptest.NewLogger(t).Sugar()
-	workdir, err := os.MkdirTemp("", "go_test_pgquartz")
+	workdir, err := RootFolder.SubFolder("clone_test")
 	assert.NoError(t, err, "could not create a temp dir")
-	defer os.RemoveAll(workdir)
-
 	c := Config{
-		Path:     GitFolder(workdir),
-		URL:      URL,
+		Path:     workdir,
+		URL:      InitiatedFolder.String(),
 		Remote:   Remote,
 		Revision: StartRevision,
 		Disable:  true,
@@ -64,7 +55,8 @@ func TestCloneCurDir(t *testing.T) {
 	assert.Error(t, c.Clone(), ".Clone should return an error when Config has Disabled set to true")
 	c.Disable = false
 	assert.Nil(t, c.Clone(), ".Clone() should be able to pull")
-	assert.DirExists(t, filepath.Join(workdir, ".git"), "After .Clone() workdir should be a git repo (hold a .git folder)")
+	assert.DirExists(t, filepath.Join(workdir.String(), ".git"),
+		"After .Clone() workdir should be a git repo (hold a .git folder)")
 	assert.True(t, c.Path.IsGitRepo(), "Check if IsGitRepo works as expected (2)")
 
 	assert.Equal(t, Remote, c.Remote, "Detect remote defaults to 'origin' after Initialize")
@@ -80,21 +72,20 @@ func TestCloneCurDir(t *testing.T) {
 
 func TestSubDir(t *testing.T) {
 	log = zaptest.NewLogger(t).Sugar()
-	workdir, err := os.MkdirTemp("", "go_test_pgquartz")
+	workdir, err := RootFolder.SubFolder("subdir_test")
 	assert.NoError(t, err, "could not create the temp dir for SubDir test")
-	//defer os.RemoveAll(workdir)
 
 	c := Config{
-		Path:     GitFolder(workdir),
-		URL:      URL,
+		Path:     workdir,
+		URL:      InitiatedFolder.String(),
 		Remote:   Remote,
 		Revision: LaterRevision,
 	}
 	c.Initialize(workdir)
 	log.Debug(c)
 	assert.Nil(t, c.Clone(), ".Clone() should be able to clone")
-	c.Path = GitFolder(filepath.Join(string(c.Path), "cmd"))
-	c.Initialize(workdir)
+	c.Path, err = c.Path.SubFolder("cmd")
+	assert.NoError(t, err, "should be able to create subdir 'cmd'")
 	assert.True(t, c.Path.IsGitRepo(), "Check if IsGitRepo works as expected (3)")
 	assert.Nil(t, c.Checkout(EarlierRevision), ".Checkout should work if this is ")
 }

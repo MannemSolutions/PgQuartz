@@ -2,25 +2,27 @@ package git
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
-type GitFolder string
+type Folder string
 
-type GitFolderState int
+type FolderState int
 
 const (
-	GitFolderMissing    GitFolderState = iota
-	GitFolderEmpty      GitFolderState = iota
-	GitFolderUnexpected GitFolderState = iota
-	GitFolderInitiated  GitFolderState = iota
-	GitFolderUnknown    GitFolderState = iota
+	folderMissing    FolderState = iota
+	folderEmpty      FolderState = iota
+	folderUnexpected FolderState = iota
+	folderInitiated  FolderState = iota
+	folderUnknown    FolderState = iota
 )
 
-func (gf GitFolder) _RunGitCommand(command []string) (string, string, error) {
+func (gf Folder) _RunGitCommand(command []string) (string, string, error) {
 	stdOut := new(bytes.Buffer)
 	stdErr := new(bytes.Buffer)
 	exCommand := exec.Command("git", command...)
@@ -32,7 +34,24 @@ func (gf GitFolder) _RunGitCommand(command []string) (string, string, error) {
 	return stdOut.String(), stdErr.String(), err
 }
 
-func (gf GitFolder) RunGitCommand(command []string) error {
+func (gf Folder) SubFolder(name string) (Folder, error) {
+	subFolder := Folder(filepath.Join(gf.String(), name))
+	if exists, err := subFolder.Exists(); err != nil {
+		return "", fmt.Errorf("could not check if folder %s already exists", subFolder)
+	} else if exists {
+		return "", fmt.Errorf("folder %s already exists", subFolder)
+	}
+	if err := os.MkdirAll(subFolder.String(), 0775); err != nil {
+		return "", err
+	}
+	return subFolder, nil
+}
+
+func (gf Folder) String() string {
+	return string(gf)
+}
+
+func (gf Folder) RunGitCommand(command []string) error {
 	stdout, stderr, err := gf._RunGitCommand(command)
 	if err != nil {
 		log.Error(stdout)
@@ -41,7 +60,7 @@ func (gf GitFolder) RunGitCommand(command []string) error {
 	return err
 }
 
-func (gf GitFolder) GetCommit(revision string) string {
+func (gf Folder) GetCommit(revision string) string {
 	if !gf.IsGitRepo() {
 		log.Errorf("folder %s is not a git repo", gf)
 		return ""
@@ -50,12 +69,12 @@ func (gf GitFolder) GetCommit(revision string) string {
 		log.Error("Error occured while retrieving commit %s: %e", revision, err)
 		return ""
 	} else {
-		return out
+		return strings.TrimSpace(out)
 	}
 }
 
 // IsGitRepo checks if the folder is already initialized as a git repo
-func (gf GitFolder) IsGitRepo() bool {
+func (gf Folder) IsGitRepo() bool {
 	if out, _, err := gf._RunGitCommand([]string{"rev-parse", "--is-inside-work-tree"}); err != nil {
 		return false
 	} else {
@@ -64,7 +83,7 @@ func (gf GitFolder) IsGitRepo() bool {
 }
 
 // Exists checks if the folder exists (which coud then still be empty
-func (gf GitFolder) Exists() (bool, error) {
+func (gf Folder) Exists() (bool, error) {
 	if _, err := os.Stat(string(gf)); err == nil {
 		return true, nil
 	} else if os.IsNotExist(err) {
@@ -74,7 +93,7 @@ func (gf GitFolder) Exists() (bool, error) {
 	}
 }
 
-func (gf GitFolder) IsEmpty() (bool, error) {
+func (gf Folder) IsEmpty() (bool, error) {
 	f, err := os.Open(string(gf))
 	if err != nil {
 		return false, err
@@ -88,32 +107,31 @@ func (gf GitFolder) IsEmpty() (bool, error) {
 	return false, err // Either not empty or error, suits both cases
 }
 
-func (gf GitFolder) State() GitFolderState {
+func (gf Folder) state() FolderState {
 	/*
-		GitFolderMissing   GitFolderState = iota
-		GitFolderEmpty     GitFolderState = iota
-		GitFolderInitiated GitFolderState = iota
+		folderMissing   GitFolderState = iota
+		folderEmpty     GitFolderState = iota
+		folderInitiated GitFolderState = iota
 	*/
 	if exists, err := gf.Exists(); err != nil {
-		log.Debug("Error checkkng if %s Exists: %e", gf, err)
-		return GitFolderUnknown
+		log.Debug("Error checking if %s Exists: %e", gf, err)
+		return folderUnknown
 	} else if !exists {
-		return GitFolderMissing
+		return folderMissing
 	}
 	if gf.IsGitRepo() {
-		return GitFolderInitiated
+		return folderInitiated
 	}
 	if empty, err := gf.IsEmpty(); err != nil {
-		log.Debug("Error checkkng if %s is empty: %e", gf, err)
-		return GitFolderUnknown
+		log.Debug("Error checking if %s is empty: %e", gf, err)
+		return folderUnknown
 	} else if empty {
-		return GitFolderEmpty
+		return folderEmpty
 	}
 	log.Debug("folder %s exists, is no git folder and is not empty", gf)
-	return GitFolderUnexpected
+	return folderUnexpected
 }
 
-func (gf GitFolder) IsPrepared() bool {
-	return gf.State() == GitFolderInitiated
-
+func (gf Folder) IsPrepared() bool {
+	return gf.state() == folderInitiated
 }
