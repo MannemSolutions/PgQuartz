@@ -112,16 +112,3 @@ func newGitUrl(remoteUrl string) (url gitUrl, err error) {
 	}
 	return gitUrl{}, invalidGitUrlFormat
 }
-
-type gitUrls []gitUrl
-
-func newGitUrls(remoteUrls []string) (urls gitUrls, err error) {
-	for _, remoteUrl := range remoteUrls {
-		if url, err := newGitUrl(remoteUrl); err != nil {
-			return gitUrls{}, err
-		} else {
-			urls = append(urls, url)
-		}
-	}
-	return urls, nil
-}

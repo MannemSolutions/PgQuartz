@@ -98,8 +98,10 @@ func (gc Config) Clone() error {
 		log.Debug("Repo %s is not a git repo, error getting more info", gc.Path)
 		return err
 	} else if !exists {
-		log.Debug("iCreating repo folder %s", gc.Path)
-		os.MkdirAll(string(gc.Path), os.ModePerm)
+		log.Debug("Creating repo folder %s", gc.Path)
+		if err = os.MkdirAll(string(gc.Path), os.ModePerm); err != nil {
+			return err
+		}
 		// We need to create the folder!!!
 	}
 

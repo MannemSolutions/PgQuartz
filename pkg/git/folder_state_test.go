@@ -20,7 +20,7 @@ func TestInitiated(t *testing.T) {
 	assert.True(t, InitiatedFolder.IsGitRepo(), "InitedFolder should be detected as git repo")
 	assert.Equal(t, folderInitiated, InitiatedFolder.state(), "state should be folderInitiated")
 	commit := InitiatedFolder.GetCommit("tag1")
-	assert.Regexp(t, regexp.MustCompile("[a-f\\d]{40}"), commit,
+	assert.Regexp(t, regexp.MustCompile(`[a-f\d]{40}`), commit,
 		fmt.Sprintf("GetCommit should be returning a commit for tag1, but retruned %s", commit))
 	assert.NoError(t, InitiatedFolder.RunGitCommand([]string{"status"}), "")
 	stdout, stderr, err := InitiatedFolder._RunGitCommand([]string{"branch", "--show-current"})

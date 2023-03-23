@@ -14,7 +14,8 @@ var (
 	EmptyFolder      Folder
 	UnexpectedFolder Folder
 	InitiatedFolder  Folder
-	UnknownFolder    Folder
+	// Cannot simulate a situation that generates a UnknownFOlder situation
+	//UnknownFolder    Folder
 )
 
 func TestMain(m *testing.M) {
@@ -23,7 +24,11 @@ func TestMain(m *testing.M) {
 	if err := setupTesting(); err != nil {
 		log.Panicf("error while setting up test requirements: %e", err)
 	}
-	defer teardownTesting()
+	defer func() {
+		if err := teardownTesting(); err != nil {
+			log.Fatalf("Error on teardown: %e", err)
+		}
+	}()
 	exitcode := m.Run()
 	_ = log.Sync()
 	os.Exit(exitcode)
@@ -40,7 +45,6 @@ func createTag(repo Folder, tag string, file string, data string) error {
 	} else if err = repo.RunGitCommand([]string{"add", "."}); err != nil {
 		return err
 	} else if err = repo.RunGitCommand([]string{"commit", "-m", "initial"}); err != nil {
-		return err
 		return err
 	} else if err = repo.RunGitCommand([]string{"tag", tag}); err != nil {
 		return err
