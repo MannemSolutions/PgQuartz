@@ -24,7 +24,7 @@ func TestInitiated(t *testing.T) {
 		fmt.Sprintf("GetCommit should be returning a commit for tag1, but retruned %s", commit))
 	assert.NoError(t, InitiatedFolder.RunGitCommand([]string{"status"}), "")
 	stdout, stderr, err := InitiatedFolder._RunGitCommand([]string{"branch", "--show-current"})
-	assert.Equal(t, "main\n", stdout, "_RunGitCommand should return 'main' on stdout")
+	assert.Regexp(t, regexp.MustCompile(`(main|master)\n`), stdout, "_RunGitCommand should return 'main' on stdout")
 	assert.Equal(t, "", stderr, "_RunGitCommand should return '' on stderr")
 	assert.NoError(t, err, "_RunGitCommand should return no error")
 }

@@ -56,6 +56,12 @@ func initRepo(repo Folder) error {
 	if err := repo.RunGitCommand([]string{"init"}); err != nil {
 		return err
 	}
+	if err := repo.RunGitCommand([]string{"config", "user.name", "unittest"}); err != nil {
+		return err
+	}
+	if err := repo.RunGitCommand([]string{"config", "user.email", "unittest@domain.local"}); err != nil {
+		return err
+	}
 
 	for i := 1; i < 5; i++ {
 		if err := createTag(repo, fmt.Sprintf("tag%d", i), fmt.Sprintf("foo%d", i), "bar"); err != nil {
