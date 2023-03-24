@@ -3,41 +3,15 @@ package jobs
 import (
 	"context"
 	"fmt"
-	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/mannemsolutions/PgQuartz/pkg/etcd"
-	"github.com/mitchellh/go-homedir"
+	"github.com/mannemsolutions/PgQuartz/pkg/git"
 	"gopkg.in/yaml.v2"
 )
 
-type GitConfig struct {
-	Remote       string `yaml:"remote"`
-	RsaPath      string `yaml:"rsaPath"`
-	HttpUser     string `yaml:"httpUser"`
-	HttpPassword string `yaml:"httpPassword"`
-	Disable      bool   `yaml:"disable"`
-}
-
-func (gc *GitConfig) Initialize() {
-	if gc.Remote == "" {
-		gc.Remote = "origin"
-	}
-	if gc.RsaPath == "" {
-		gc.RsaPath = "~/.ssh/id_rsa"
-	}
-	if strings.HasPrefix(gc.RsaPath, "~/") {
-		if home, err := homedir.Dir(); err != nil {
-			panic(fmt.Sprintf("failed to expand homedir: %e", err))
-		} else {
-			gc.RsaPath = filepath.Join(home, gc.RsaPath[2:])
-		}
-	}
-}
-
 type Config struct {
-	Git            GitConfig   `yaml:"git"`
+	Git            git.Config  `yaml:"git"`
 	Steps          Steps       `yaml:"steps"`
 	Checks         Checks      `yaml:"checks"`
 	Target         Target      `yaml:"target"`
@@ -83,7 +57,7 @@ func (c Config) Verify() {
 }
 
 func (c *Config) Initialize() {
-	c.Git.Initialize()
+	c.Git.Initialize(git.Folder(c.Workdir))
 	c.Steps.Initialize()
 }
 
