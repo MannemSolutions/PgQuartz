@@ -5,13 +5,17 @@ uname_p := $(shell uname -p) # store the output of the command in a variable
 build: build_pgquartz
 
 build_pgquartz:
-	./set_version.sh
+	sh ./set_version.sh
 	go mod tidy -compat=1.17
-	go build -o ./bin/pgquartz.$(uname_p) ./cmd/pgquartz
+	go build -o ./bin/pgquartz ./cmd/pgquartz
+	ln ./bin/pgquartz ./bin/pgquartz.$(uname_p)
 
 build_dlv:
 	go get github.com/go-delve/delve/cmd/dlv@latest
 	go build -o /bin/dlv.$(uname_p) github.com/go-delve/delve/cmd/dlv
+
+build_image:
+	docker build . --tag mannemsolutions/pgquartz
 
 # Use the following on m1:
 # alias make='/usr/bin/arch -arch arm64 /usr/bin/make'
