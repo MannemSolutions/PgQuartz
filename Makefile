@@ -5,10 +5,10 @@ uname_p := $(shell uname -p) # store the output of the command in a variable
 build: build_pgquartz
 
 build_pgquartz:
-	sh ./set_version.sh
+	bash ./set_version.sh
 	go mod tidy -compat=1.17
 	go build -o ./bin/pgquartz ./cmd/pgquartz
-	ln ./bin/pgquartz ./bin/pgquartz.$(uname_p)
+	ln -f ./bin/pgquartz ./bin/pgquartz.$(uname_p)
 
 build_dlv:
 	go get github.com/go-delve/delve/cmd/dlv@latest
