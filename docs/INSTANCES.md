@@ -15,7 +15,7 @@ Would be converted into the following instances:
 {"arg1": "1", "arg2": "A"}
 {"arg1": "1", "arg2": "B"}
 {"arg1": "2", "arg2": "A"}
-{"arg1": "3", "arg2": "B"}
+{"arg1": "2", "arg2": "B"}
 ```
 
 PgQuartz then schedules and runs every instance separately.
